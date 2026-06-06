@@ -56,6 +56,9 @@ st.set_page_config(
 st.markdown("""
 
 <style>
+    :root {
+        color-scheme: dark !important;
+    }
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
           
   html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
@@ -208,6 +211,11 @@ st.markdown("""
     background: rgba(243,238,241,0.08) !important;
     color: #F3EEF1 !important;
     border: 1px solid rgba(234,156,175,0.3) !important;
+}
+
+/* Selectbox */
+.stSelectbox * {
+    color: #F3EEF1 !important;
 }
 
   /* Button */

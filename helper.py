@@ -23,6 +23,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import joblib
 import os
+import shap
 
 # ──────────────────────────────────────────────────────────
 # KONSTANTA
@@ -157,6 +158,38 @@ def get_feature_importance(model) -> pd.DataFrame:
     }).sort_values("Importance", ascending=False).reset_index(drop=True)
     return df
 
+def get_local_explanation(model, scaler, inputs):
+    """
+    Feature importance yang menyesuaikan dengan input user
+    """
+
+    x = np.array([[inputs[f] for f in FEATURE_NAMES]])
+    x_scaled = scaler.transform(x)
+
+    # pakai estimator pertama (Heating Load)
+    explainer = shap.TreeExplainer(model.estimators_[0])
+
+    shap_values = explainer.shap_values(x_scaled)
+
+    contribution = np.abs(shap_values[0])
+
+    df = pd.DataFrame({
+        "Feature": FEATURE_NAMES,
+        "Contribution": contribution
+    })
+
+    df["Pct"] = (
+        df["Contribution"]
+        / df["Contribution"].sum()
+        * 100
+    ).round(1)
+
+    df = df.sort_values(
+        "Pct",
+        ascending=False
+    ).reset_index(drop=True)
+
+    return df
 
 # ──────────────────────────────────────────────────────────
 # 6. REKOMENDASI OTOMATIS

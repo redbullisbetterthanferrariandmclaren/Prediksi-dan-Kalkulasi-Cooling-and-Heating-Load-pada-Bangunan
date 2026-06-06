@@ -28,6 +28,7 @@ from helper import (
     predict,
     energy_efficiency_score,
     get_feature_importance,
+    get_local_explanation,
     get_recommendation,
     make_pmap_figure,
     make_importance_figure,
@@ -390,7 +391,11 @@ if predict_btn:
     else:
         with st.spinner("Menjalankan prediksi AI..."):
             result = predict(model, scaler, user_inputs)
-            fi_df  = get_feature_importance(model)
+            fi_df = get_local_explanation(
+                model,
+                scaler,
+                user_inputs
+            )
             st.session_state.result    = result
             st.session_state.fi_df    = fi_df
             st.session_state.inputs   = user_inputs.copy()

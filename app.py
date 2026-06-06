@@ -66,9 +66,9 @@ st.markdown("""
 .stApp {
     background: linear-gradient(
         135deg,
-        #2B1F2F 0%,
-        #35263A 50%,
-        #402C46 100%
+        #2A3324 0%,
+        #31452B 50%,
+        #3A5231 100%
     );
 }
 
@@ -76,30 +76,51 @@ st.markdown("""
 [data-testid="stSidebar"] {
     background: linear-gradient(
         180deg,
-        #F3EEF1 0%,
-        #ECE3E8 100%
+        #EFE5D1 0%,
+        #E8DDC7 100%
     );
-    border-right: 2px solid #EA9CAF;
+    border-right: 2px solid #E6A59E;
+}
+            
+[data-testid="stSidebar"] * {
+    color: #5A4A42 !important;
+}
+
+[data-testid="stSidebar"] label {
+    color: #5A4A42 !important;
+}
+
+[data-testid="stSidebar"] p {
+    color: #5A4A42 !important;
+}
+
+[data-testid="stSidebar"] span {
+    color: #5A4A42 !important;
+}
+
+[data-testid="stSidebar"] div {
+    color: #5A4A42 !important;
 }
 
 [data-testid="stSidebar"] * {
-    color: #5C4050 !important;
+    color: #5A4A42 !important;
 }
             
   /* Main header */
   .main-header {
     background: linear-gradient(
         135deg,
-        rgba(234,156,175,0.15) 0%,
-        rgba(213,105,137,0.15) 100%
+        rgba(230,165,158,0.18) 0%,
+        rgba(180,212,122,0.18) 100%
     );
-    border: 1px solid rgba(234,156,175,0.4);
-  }
+    border: 1px solid rgba(230,165,158,0.35);
+}
+            
   .main-header h1 {
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 2.4rem;
     font-weight: 700;
-    color: #F3EEF1;
+    color: #EFE5D1;
     letter-spacing: 1px;
     margin: 0;
   }
@@ -107,8 +128,8 @@ st.markdown("""
 
   /* Metric cards */
   .metric-card {
-    background: rgba(58,41,63,0.85);
-    border: 1px solid rgba(234,156,175,0.4);
+    background: rgba(44,58,38,0.85);
+    border: 1px solid rgba(180,212,122,0.35);
     box-shadow: 0 8px 24px rgba(0,0,0,0.2);
     border-radius: 12px;
     padding: 1.2rem 1.4rem;
@@ -136,16 +157,16 @@ st.markdown("""
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 1.4rem;
     font-weight: 600;
-    color: #EA9CAF;
-    border-left: 4px solid #D56989;
+    color: #B4D47A;
+    border-left: 4px solid #3D7D3D;
     padding-left: 0.8rem;
     margin: 1.5rem 0 1rem;
   }
 
   /* Info box */
   .info-box {
-    background: rgba(243,238,241,0.08);
-    border: 1px solid rgba(234,156,175,0.3);
+    background: rgba(239,229,209,0.06);
+    border: 1px solid rgba(180,212,122,0.25);
     border-radius: 10px;
     padding: 1rem 1.2rem;
     color: #F3EEF1;
@@ -157,10 +178,10 @@ st.markdown("""
   .rec-card {
     background: linear-gradient(
         135deg,
-        rgba(234,156,175,0.10) 0%,
-        rgba(213,105,137,0.10) 100%
+        rgba(230,165,158,0.12) 0%,
+        rgba(180,212,122,0.12) 100%
     );
-    border: 1px solid rgba(234,156,175,0.35);
+    border: 1px solid rgba(230,165,158,0.3);
     border-radius: 12px;
     padding: 1.2rem 1.4rem;
     margin: 0.6rem 0;
@@ -170,34 +191,40 @@ st.markdown("""
 
   /* What-if comparison */
   .compare-before {
-    background: rgba(213,105,137,0.08);
-    border: 1px solid rgba(213,105,137,0.3);
+    background: rgba(230,165,158,0.10);
+    border: 1px solid rgba(230,165,158,0.35);
     border-radius: 10px;
     padding: 1rem 1.2rem;
     text-align: center;
   }
   .compare-after {
-    background: rgba(194,220,128,0.08);
-    border: 1px solid rgba(194,220,128,0.35);
+    background: rgba(180,212,122,0.10);
+    border: 1px solid rgba(180,212,122,0.35);
     border-radius: 10px;
     padding: 1rem 1.2rem;
     text-align: center;
   }
 
+<p style="
+font-size:0.78rem;
+margin-top:0.5rem;
+color:#B4D47A;
+font-weight:500;
+">
   /* Hide Streamlit default elements */
   #MainMenu, footer { visibility: hidden; }
 
   /* Tab style */
   .stTabs [data-baseweb="tab"] {
-    background: #F3EEF1;
-    color: #7D5768;
+    background: #EFE5D1;
+    color: #5A4A42;
     border-radius: 12px 12px 0 0;
     margin-right: 6px;
     padding: 10px 18px;
     font-weight: 600;
   }
   .stTabs [aria-selected="true"] {
-    background: #EA9CAF !important;
+    background: #3D7D3D !important;
     color: white !important;
 }
 
@@ -222,14 +249,33 @@ st.markdown("""
   .stButton > button {
     background: linear-gradient(
         135deg,
-        #EA9CAF 0%,
-        #D56989 100%
+        #B4D47A 0%,
+        #3D7D3D 100%
     );
     color: white;
     border: none;
     border-radius: 12px;
 }
   .stButton > button:hover { opacity: 0.9; }
+            
+html,
+body,
+p,
+span,
+label,
+div,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: inherit !important;
+}
+ :root {
+    color-scheme: dark !important;
+}           
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -253,7 +299,6 @@ st.markdown("""
 <div class="main-header">
   <h1>⚡ EnergyPredict AI</h1>
   <p>Prediksi & Kalkulasi Heating Load · Cooling Load · Efisiensi Energi Bangunan</p>
-  <p style="font-size:0.78rem;margin-top:0.5rem;color:#475569;">
     Berbasis UCI Energy Efficiency Dataset · Random Forest Regressor · MultiOutputRegressor
   </p>
 </div>
@@ -321,6 +366,7 @@ user_inputs = {
     "Glazing Area"              : ga,
     "Glazing Area Distribution" : float(gad),
 }
+
 
 
 # ──────────────────────────────────────────────────────────

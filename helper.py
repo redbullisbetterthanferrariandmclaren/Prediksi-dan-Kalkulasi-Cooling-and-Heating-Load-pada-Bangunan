@@ -108,8 +108,8 @@ def predict(model, scaler, inputs: dict) -> dict:
     x_scaled = scaler.transform(x)
     pred = model.predict(x_scaled)[0]
     return {
-        "Heating Load": round(float(pred[0]), 2),
-        "Cooling Load": round(float(pred[1]), 2),
+        "Heating Load": round(float(pred[0]), 6),
+        "Cooling Load": round(float(pred[1]), 6),
     }
 
 
@@ -196,7 +196,7 @@ def get_local_explanation(model, scaler, inputs):
 # ──────────────────────────────────────────────────────────
 RECOMMENDATION_MAP = {
     "Relative Compactness": (
-        "🏠 **Kompaktkan Desain Bangunan**\n\n"
+        "🏠 Kompaktkan Desain Bangunan\n\n"
         "Relative Compactness merupakan faktor dominan pada prediksi ini. "
         "Semakin kompak sebuah bangunan, semakin kecil permukaan yang bersentuhan "
         "dengan lingkungan luar, sehingga kehilangan energi berkurang.\n\n"
@@ -204,7 +204,7 @@ RECOMMENDATION_MAP = {
         "yang terlalu memanjang atau berliku."
     ),
     "Surface Area": (
-        "📐 **Optimasi Luas Permukaan**\n\n"
+        "📐 Optimasi Luas Permukaan\n\n"
         "Luas permukaan yang besar memperbesar area pertukaran panas antara "
         "bangunan dan lingkungan. Hal ini meningkatkan kebutuhan pendinginan "
         "maupun pemanasan.\n\n"
@@ -212,7 +212,7 @@ RECOMMENDATION_MAP = {
         "seluruh permukaan eksterior bangunan."
     ),
     "Wall Area": (
-        "🧱 **Tingkatkan Insulasi Dinding**\n\n"
+        "🧱 Tingkatkan Insulasi Dinding\n\n"
         "Wall Area adalah faktor yang paling memengaruhi prediksi ini. "
         "Dinding dengan luas besar atau insulasi rendah meningkatkan transfer "
         "panas secara signifikan.\n\n"
@@ -221,7 +221,7 @@ RECOMMENDATION_MAP = {
         "dinding berlapis insulasi mineral."
     ),
     "Roof Area": (
-        "🏚️ **Optimalkan Desain Atap**\n\n"
+        "🏚️ Optimalkan Desain Atap\n\n"
         "Atap adalah area yang menerima paparan radiasi matahari terbesar. "
         "Roof Area besar tanpa insulasi yang memadai meningkatkan Cooling Load "
         "secara drastis.\n\n"
@@ -230,14 +230,14 @@ RECOMMENDATION_MAP = {
         "mengurangi panas yang masuk."
     ),
     "Overall Height": (
-        "🏢 **Evaluasi Ketinggian Bangunan**\n\n"
+        "🏢 Evaluasi Ketinggian Bangunan\n\n"
         "Ketinggian bangunan berpengaruh pada volume udara yang harus "
         "dikondisikan serta paparan angin.\n\n"
         "→ Pertimbangkan ceiling height yang optimal dan pastikan sistem "
         "HVAC dimensinya sesuai dengan volume bangunan."
     ),
     "Orientation": (
-        "🧭 **Optimasi Orientasi Bangunan**\n\n"
+        "🧭 Optimasi Orientasi Bangunan\n\n"
         "Orientasi bangunan menentukan seberapa besar paparan sinar matahari "
         "langsung yang diterima fasad. Orientasi yang salah dapat "
         "meningkatkan Cooling Load secara signifikan.\n\n"
@@ -245,7 +245,7 @@ RECOMMENDATION_MAP = {
         "Utara atau Selatan untuk mengurangi paparan matahari pagi dan sore."
     ),
     "Glazing Area": (
-        "🪟 **Kurangi atau Tingkatkan Kualitas Kaca**\n\n"
+        "🪟 Kurangi atau Tingkatkan Kualitas Kaca\n\n"
         "Glazing Area (luas kaca) adalah faktor TERBESAR pada prediksi ini. "
         "Kaca adalah konduktor panas yang buruk — kaca biasa memiliki nilai "
         "U-value yang sangat tinggi, menyebabkan transfer panas masif.\n\n"
@@ -254,7 +254,7 @@ RECOMMENDATION_MAP = {
         "transfer panas hingga 50%."
     ),
     "Glazing Area Distribution": (
-        "🔲 **Distribusikan Kaca Secara Strategis**\n\n"
+        "🔲 Distribusikan Kaca Secara Strategis\n\n"
         "Distribusi area kaca per sisi bangunan sangat memengaruhi efisiensi. "
         "Kaca yang terkonsentrasi pada sisi Barat/Timur memaksimalkan "
         "paparan matahari pagi dan sore.\n\n"

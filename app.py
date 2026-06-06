@@ -572,15 +572,15 @@ with tab_xai:
 
         if diff_pct > 0:
             math_text = (
-                f"Bangunan Anda berada pada zona **{cat}** karena kombinasi "
-                f"**{top_features_str}** yang tinggi menyebabkan rata-rata beban energi "
-                f"sebesar **{avg_load:.1f} kWh/m²**, yaitu **{abs(diff_pct):.1f}% lebih tinggi** "
+                f"Bangunan Anda berada pada zona {cat} karena kombinasi "
+                f"{top_features_str} yang tinggi menyebabkan rata-rata beban energi "
+                f"sebesar {avg_load:.1f} kWh/m², yaitu {abs(diff_pct):.1f}% lebih tinggi "
                 f"dibanding rata-rata bangunan efisien pada dataset UCI ({avg_ref} kWh/m²)."
             )
         else:
             math_text = (
-                f"Bangunan Anda berada pada zona **{cat}**. Rata-rata beban energi "
-                f"sebesar **{avg_load:.1f} kWh/m²**, yaitu **{abs(diff_pct):.1f}% lebih rendah** "
+                f"Bangunan Anda berada pada zona {cat}. Rata-rata beban energi "
+                f"sebesar {avg_load:.1f} kWh/m², yaitu {abs(diff_pct):.1f}% lebih rendah "
                 f"dibanding rata-rata dataset UCI ({avg_ref} kWh/m²). Desain ini sudah efisien!"
             )
 

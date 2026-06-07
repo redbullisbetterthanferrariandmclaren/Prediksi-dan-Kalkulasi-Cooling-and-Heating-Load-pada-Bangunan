@@ -285,7 +285,7 @@ def get_recommendation(feature_importance_df: pd.DataFrame) -> list[dict]:
 # ──────────────────────────────────────────────────────────
 # 7. PERFORMANCE MAP (P-MAP)
 # ──────────────────────────────────────────────────────────
-def make_pmap_figure(hl_user: float, cl_user: float) -> go.Figure:
+def make_pmap_figure(hl_user: float = None, cl_user: float = None) -> go.Figure:
     """
     Membuat Performance Map (P-Map) dengan zona efisiensi dan
     posisi bangunan pengguna.
@@ -341,23 +341,24 @@ def make_pmap_figure(hl_user: float, cl_user: float) -> go.Figure:
     ))
 
     # Posisi bangunan pengguna
-    score_user, cat, color = energy_efficiency_score(hl_user, cl_user)
-    fig.add_trace(go.Scatter(
-        x=[hl_user], y=[cl_user],
-        mode="markers+text",
-        marker=dict(size=18, color=color, symbol="star", line=dict(width=2, color="white")),
-        text=[f"  Anda\n({score_user}/100)"],
-        textposition="middle right",
-        textfont=dict(size=12, color="white"),
-        name=f"Bangunan Anda ({cat})",
-        hovertemplate=(
-            f"<b>Bangunan Anda</b><br>"
-            f"Heating Load : {hl_user} kWh/m²<br>"
-            f"Cooling Load : {cl_user} kWh/m²<br>"
-            f"Score        : {score_user}/100<br>"
-            f"Kategori     : {cat}<extra></extra>"
-        ),
-    ))
+    if hl_user is not None and cl_user is not None:
+        score_user, cat, color = energy_efficiency_score(hl_user, cl_user)
+        fig.add_trace(go.Scatter(
+            x=[hl_user], y=[cl_user],
+            mode="markers+text",
+            marker=dict(size=18, color=color, symbol="star", line=dict(width=2, color="white")),
+            text=[f"  Anda\n({score_user}/100)"],
+            textposition="middle right",
+            textfont=dict(size=12, color="white"),
+            name=f"Bangunan Anda ({cat})",
+            hovertemplate=(
+                f"<b>Bangunan Anda</b><br>"
+                f"Heating Load : {hl_user} kWh/m²<br>"
+                f"Cooling Load : {cl_user} kWh/m²<br>"
+                f"Score        : {score_user}/100<br>"
+                f"Kategori     : {cat}<extra></extra>"
+            ),
+        ))
 
     fig.update_layout(
         title=dict(text="🗺️ Performance Map — Posisi Efisiensi Energi Bangunan", font=dict(size=16)),
@@ -367,6 +368,12 @@ def make_pmap_figure(hl_user: float, cl_user: float) -> go.Figure:
         plot_bgcolor="rgba(15,20,40,0.85)",
         font=dict(color="white"),
         legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0.75,
+
             bgcolor="rgba(0,0,0,0.4)",
             bordercolor="rgba(255,255,255,0.2)",
             borderwidth=1,

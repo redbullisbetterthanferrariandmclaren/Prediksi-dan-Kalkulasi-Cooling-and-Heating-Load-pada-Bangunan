@@ -12,7 +12,6 @@ Fitur:
   6. Explainable AI (Feature Importance)
   7. Rekomendasi Otomatis
   8. What-If Analysis
-  9. Estimasi Biaya Operasional
 
 Jalankan:
   streamlit run app.py
@@ -33,12 +32,8 @@ from helper import (
     make_pmap_figure,
     make_importance_figure,
     what_if_analysis,
-    estimate_cost,
-    fmt_rp,
     FEATURE_NAMES,
-    TARGET_NAMES,
-    DEFAULT_PLN_RATE,
-    BUILDING_AREA_M2,
+    TARGET_NAMES,  
 )
 
 # ──────────────────────────────────────────────────────────
@@ -83,7 +78,7 @@ st.markdown("""
     border-right: 2px solid #E6A59E;
 }
             
-[data-testid="stSidebar"] * {
+[data-testid="stSidebar"] {
     color: #5A4A42 !important;
 }
 
@@ -95,15 +90,7 @@ st.markdown("""
     color: #5A4A42 !important;
 }
 
-[data-testid="stSidebar"] span {
-    color: #5A4A42 !important;
-}
-
-[data-testid="stSidebar"] div {
-    color: #5A4A42 !important;
-}
-
-[data-testid="stSidebar"] * {
+[data-testid="stSidebar"] {
     color: #5A4A42 !important;
 }
             
@@ -246,6 +233,31 @@ font-weight:500;
     color: #F3EEF1 !important;
 }
 
+/* Selectbox text */
+[data-baseweb="select"] > div {
+    color: #F3EEF1 !important;
+}
+
+/* Text yang sedang dipilih */
+[data-baseweb="select"] span {
+    color: #F3EEF1 !important;
+}
+
+/* Input selectbox */
+[data-baseweb="select"] input {
+    color: #F3EEF1 !important;
+}
+
+/* Dropdown menu */
+div[role="listbox"] {
+    background-color: #24311F !important;
+}
+
+div[role="option"] {
+    color: #F3EEF1 !important;
+}
+            
+
   /* Button */
   .stButton > button {
     background: linear-gradient(
@@ -259,20 +271,7 @@ font-weight:500;
 }
   .stButton > button:hover { opacity: 0.9; }
             
-html,
-body,
-p,
-span,
-label,
-div,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    color: inherit !important;
-}
+
  :root {
     color-scheme: dark !important;
 }           
@@ -344,13 +343,6 @@ with st.sidebar:
                        help="Distribusi kaca per sisi bangunan")
 
     st.markdown("---")
-    st.markdown("#### ⚙️ Pengaturan Biaya")
-    pln_rate = st.number_input("Tarif PLN (Rp/kWh)", min_value=500, max_value=5000,
-                               value=DEFAULT_PLN_RATE, step=50)
-    area_m2  = st.number_input("Luas Bangunan (m²)", min_value=10, max_value=10000,
-                               value=BUILDING_AREA_M2, step=10)
-
-    st.markdown("---")
     predict_btn = st.button("🔍 Prediksi Sekarang", use_container_width=True)
 
 
@@ -399,19 +391,16 @@ if predict_btn:
             st.session_state.result    = result
             st.session_state.fi_df    = fi_df
             st.session_state.inputs   = user_inputs.copy()
-            st.session_state.pln_rate = pln_rate
-            st.session_state.area_m2  = area_m2
         st.success("✅ Prediksi berhasil!")
 
 
 # ──────────────────────────────────────────────────────────
 # MAIN CONTENT TABS
 # ──────────────────────────────────────────────────────────
-tab_pred, tab_xai, tab_whatif, tab_crisp = st.tabs([
+tab_pred, tab_xai, tab_whatif = st.tabs([
     "Hasil Prediksi",
     "Explainable AI",
     "What-If Analysis",
-    "CRISP-DM",
 ])
 
 
@@ -429,7 +418,7 @@ with tab_pred:
 
         # Demo preview P-Map kosong
         st.markdown('<div class="section-header">🗺️ Performance Map (Preview)</div>', unsafe_allow_html=True)
-        fig_demo = make_pmap_figure(22.0, 25.0)
+        fig_demo = make_pmap_figure()
         st.plotly_chart(fig_demo, use_container_width=True)
 
     else:
@@ -438,13 +427,10 @@ with tab_pred:
         hl     = res["Heating Load"]
         cl     = res["Cooling Load"]
         score, cat, color_hex = energy_efficiency_score(hl, cl)
-        cost   = estimate_cost(hl, cl,
-                               st.session_state.area_m2,
-                               st.session_state.pln_rate)
-
+        
         # ── METRIK UTAMA ──────────────────────────────────
         st.markdown('<div class="section-header">⚡ Hasil Prediksi Energi</div>', unsafe_allow_html=True)
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             st.markdown(f"""
@@ -471,13 +457,6 @@ with tab_pred:
               <div class="metric-unit">/ 100 — {cat}</div>
             </div>""", unsafe_allow_html=True)
 
-        with col4:
-            st.markdown(f"""
-            <div class="metric-card">
-              <div class="metric-label">💡 Konsumsi/Bulan</div>
-              <div class="metric-value" style="font-size:1.6rem;">{cost['konsumsi_kwh']}</div>
-              <div class="metric-unit">kWh · {fmt_rp(cost['biaya_rp'])}</div>
-            </div>""", unsafe_allow_html=True)
 
         # ── PENJELASAN SKOR ───────────────────────────────
         st.markdown("---")
@@ -493,22 +472,6 @@ with tab_pred:
         fig_pmap = make_pmap_figure(hl, cl)
         st.plotly_chart(fig_pmap, use_container_width=True)
 
-        # ── ESTIMASI BIAYA ────────────────────────────────
-        st.markdown('<div class="section-header">💰 Estimasi Biaya Operasional</div>', unsafe_allow_html=True)
-        bc1, bc2, bc3 = st.columns(3)
-        with bc1:
-            st.metric("Konsumsi per Bulan", f"{cost['konsumsi_kwh']} kWh",
-                      help=f"Luas bangunan {cost['area_m2']} m²")
-        with bc2:
-            st.metric("Estimasi Biaya/Bulan", fmt_rp(cost['biaya_rp']),
-                      help=f"Tarif PLN {fmt_rp(cost['pln_rate'])}/kWh")
-        with bc3:
-            st.metric("Estimasi Biaya/Tahun", fmt_rp(cost['biaya_rp'] * 12))
-
-        st.caption(
-            f"*Estimasi berdasarkan asumsi: luas bangunan {cost['area_m2']} m², "
-            f"tarif PLN {fmt_rp(cost['pln_rate'])}/kWh. Angka aktual dapat berbeda.*"
-        )
 
         # ── INPUT SUMMARY ─────────────────────────────────
         with st.expander("📋 Ringkasan Parameter Input"):
@@ -686,130 +649,3 @@ with tab_whatif:
                 f"Efficiency Score berubah dari **{wi['before_score']}** → **{wi['after_score']}** "
                 f"(**{delta_sc:+d} poin**)."
             )
-
-
-# ══════════════════════════════════════════════════════════
-# TAB 4 — CRISP-DM
-# ══════════════════════════════════════════════════════════
-with tab_crisp:
-    st.markdown('<div class="section-header">📋 Metodologi CRISP-DM</div>', unsafe_allow_html=True)
-
-    phases = [
-        (
-            "1️⃣ Business Understanding",
-            """
-Bangunan merupakan konsumen energi terbesar di dunia (IEA, 2023). Sebagian besar konsumsi
-energi bangunan berasal dari kebutuhan pendinginan (*Cooling Load*) dan pemanasan (*Heating Load*)
-yang ditentukan oleh karakteristik fisik sejak tahap perancangan.
-
-**Tujuan Bisnis:**
-- Membantu arsitek dan perancang bangunan melakukan estimasi kebutuhan energi sejak tahap desain awal.
-- Memberikan rekomendasi desain berbasis data untuk meningkatkan efisiensi energi sebelum konstruksi.
-- Mengurangi potensi biaya renovasi akibat desain yang kurang efisien.
-- Mendukung pengambilan keputusan dalam perancangan bangunan berkelanjutan (*sustainable building*).
-- Meningkatkan transparansi hasil prediksi melalui **Explainable AI**.
-            """
-        ),
-        (
-            "2️⃣ Data Understanding",
-            """
-**Dataset:** UCI Energy Efficiency Dataset
-- **Sumber:** [UCI ML Repository](https://archive.ics.uci.edu/dataset/242/energy+efficiency)
-- **Sampel:** 768 bangunan
-- **Fitur Input (8):** Relative Compactness, Surface Area, Wall Area, Roof Area,
-  Overall Height, Orientation, Glazing Area, Glazing Area Distribution
-- **Target Output (2):** Heating Load (Y1), Cooling Load (Y2)
-
-**Analisis Korelasi:**
-Dilakukan menggunakan korelasi Pearson dan visualisasi Heatmap untuk memahami hubungan antar variabel.
-Fitur seperti *Relative Compactness*, *Roof Area*, dan *Glazing Area* memiliki korelasi tinggi
-terhadap kedua target.
-            """
-        ),
-        (
-            "3️⃣ Data Preparation",
-            """
-**Langkah-langkah:**
-1. **Validasi Data** — Pengecekan nilai kosong, duplikat, dan nilai tidak valid.
-2. **Normalisasi** — Menggunakan `StandardScaler` agar semua fitur berada pada skala yang sama.
-3. **Split Data** — Pembagian 70% data latih dan 30% data uji (`train_test_split`, `random_state=42`).
-
-**Hasil:**
-- Data latih: 537 sampel
-- Data uji: 231 sampel
-- Tidak ditemukan nilai kosong atau duplikat pada dataset UCI.
-            """
-        ),
-        (
-            "4️⃣ Modeling",
-            """
-**Algoritma:** `MultiOutputRegressor(RandomForestRegressor)`
-
-**Alasan Pemilihan:**
-- Akurasi tinggi pada data tabular non-linear
-- Tahan terhadap overfitting dibanding Decision Tree tunggal
-- Mendukung **Feature Importance** untuk Explainable AI
-- `MultiOutputRegressor` memungkinkan prediksi dua target sekaligus
-
-**Parameter Model:**
-```
-RandomForestRegressor(n_estimators=200, random_state=42, n_jobs=-1)
-```
-            """
-        ),
-        (
-            "5️⃣ Evaluation",
-            """
-**Metrik Evaluasi:**
-
-| Metrik | Keterangan |
-|--------|------------|
-| **MAPE** | Mean Absolute Percentage Error — tingkat kesalahan dalam persentase |
-| **RMSE** | Root Mean Squared Error — sensitivitas terhadap kesalahan besar |
-| **R² Score** | Koefisien determinasi — seberapa baik model menjelaskan variasi data |
-
-MAPE digunakan sebagai metrik utama karena lebih mudah dipahami pengguna non-teknis seperti arsitek.
-Nilai MAPE < 10% menunjukkan model yang sangat baik untuk kasus ini.
-
-Jalankan `python train_model.py` untuk melihat hasil evaluasi lengkap pada terminal.
-            """
-        ),
-        (
-            "6️⃣ Interpretation & Recommendation",
-            """
-**Tahap Tambahan CRISP-DM untuk Proyek Ini:**
-
-Hasil prediksi Heating Load dan Cooling Load diterjemahkan menjadi **tingkat efisiensi energi bangunan**
-menggunakan Energy Efficiency Score (0–100):
-
-| Score | Kategori | Interpretasi |
-|-------|----------|--------------|
-| 80–100 | 🟢 Tinggi | Desain sangat efisien, kebutuhan energi rendah |
-| 60–79  | 🟡 Sedang | Ada ruang perbaikan, perhatikan rekomendasi |
-| < 60   | 🔴 Rendah | Bangunan boros energi, perlu revisi desain |
-
-Sistem kemudian menghasilkan **rekomendasi perbaikan desain** berdasarkan fitur yang paling
-berpengaruh terhadap hasil prediksi (*Feature Importance*). Tahap ini bertujuan membantu pengguna
-mengambil keputusan desain yang lebih efisien dan berkelanjutan.
-
-**Fitur Transparansi:**
-- Performance Map (P-Map) — visualisasi posisi bangunan terhadap zona efisiensi
-- Explainable AI — kontribusi setiap fitur dalam persentase
-- What-If Analysis — simulasi dampak perubahan parameter desain
-- Estimasi Biaya — proyeksi konsumsi dan biaya listrik bulanan
-            """
-        ),
-    ]
-
-    for title, content in phases:
-        with st.expander(title, expanded=False):
-            st.markdown(content)
-
-    st.markdown("---")
-    st.markdown("""
-    <div class="info-box" style="text-align:center;">
-      <strong>EnergyPredict AI</strong> — Sistem Prediksi Efisiensi Energi Bangunan<br>
-      Menggunakan Random Forest Regressor · MultiOutputRegressor · Streamlit<br>
-      Dataset: UCI Energy Efficiency (768 sampel)
-    </div>
-    """, unsafe_allow_html=True)

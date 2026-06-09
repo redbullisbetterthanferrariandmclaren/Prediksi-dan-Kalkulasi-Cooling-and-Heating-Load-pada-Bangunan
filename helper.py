@@ -1,20 +1,20 @@
 """
 helper.py
 =========
-Fungsi-fungsi pembantu untuk aplikasi Streamlit prediksi
-Heating Load & Cooling Load bangunan.
+Helper functions for the Streamlit building Heating Load & Cooling Load 
+prediction application.
 
-Berisi:
-  - load_model()            : memuat model, scaler, feature names
-  - validate_inputs()       : validasi form input pengguna
-  - predict()               : jalankan prediksi multi-output
-  - energy_efficiency_score(): skor 0-100 dan kategori efisiensi
-  - get_feature_importance(): persentase kontribusi fitur
-  - get_recommendation()    : rekomendasi berbasis fitur dominan
-  - make_pmap_figure()      : Performance Map (P-Map) Plotly
-  - make_importance_figure(): Bar chart Feature Importance Plotly
-  - what_if_analysis()      : simulasi perubahan satu fitur
-  - estimate_cost()         : estimasi biaya operasional bulanan
+Contains:
+  - load_model()             : loads the model, scaler, and feature names
+  - validate_inputs()        : validates user form inputs
+  - predict()                : runs multi-output predictions
+  - energy_efficiency_score(): calculates 0-100 score and efficiency category
+  - get_feature_importance() : calculates feature contribution percentages
+  - get_recommendation()     : generates recommendations based on dominant features
+  - make_pmap_figure()       : creates Plotly Performance Map (P-Map)
+  - make_importance_figure(): creates Plotly Feature Importance bar chart
+  - what_if_analysis()       : simulates changes to a single feature
+  - estimate_cost()          : estimates monthly operational costs
 """
 
 import numpy as np
@@ -25,9 +25,6 @@ import joblib
 import os
 import shap
 
-# ──────────────────────────────────────────────────────────
-# KONSTANTA
-# ──────────────────────────────────────────────────────────
 MODEL_PATH   = "model/energy_model.pkl"
 SCALER_PATH  = "model/scaler.pkl"
 FEATURE_PATH = "model/feature_names.pkl"
@@ -45,63 +42,53 @@ FEATURE_NAMES = [
 
 TARGET_NAMES = ["Heating Load", "Cooling Load"]
 
-# Tarif PLN default (Rp/kWh) — bisa diubah user
-DEFAULT_PLN_RATE = 1_444   # Rp/kWh (golongan R-2/R-3, 2024)
-BUILDING_AREA_M2 = 100     # asumsi luas bangunan default
+DEFAULT_PLN_RATE = 1_444   
+BUILDING_AREA_M2 = 100     
 
 
-# ──────────────────────────────────────────────────────────
-# 1. LOAD MODEL
-# ──────────────────────────────────────────────────────────
 def load_model():
-    """Memuat model, scaler, dan nama fitur dari disk."""
+    """Loads the model, scaler, and feature names from disk."""
     if not all(os.path.exists(p) for p in [MODEL_PATH, SCALER_PATH, FEATURE_PATH]):
         return None, None, None
 
-    model   = joblib.load(MODEL_PATH)
-    scaler  = joblib.load(SCALER_PATH)
+    model    = joblib.load(MODEL_PATH)
+    scaler   = joblib.load(SCALER_PATH)
     features = joblib.load(FEATURE_PATH)
     return model, scaler, features
 
 
-# ──────────────────────────────────────────────────────────
-# 2. VALIDASI INPUT
-# ──────────────────────────────────────────────────────────
 def validate_inputs(inputs: dict) -> tuple[bool, list[str]]:
     """
-    Validasi dictionary input bangunan.
-    Mengembalikan (is_valid: bool, errors: list[str]).
+    Validates the building inputs dictionary.
+    Returns (is_valid: bool, errors: list[str]).
     """
     errors = []
 
     rc = inputs.get("Relative Compactness", -1)
     if not (0.0 < rc <= 1.0):
-        errors.append("Relative Compactness harus antara 0 (eksklusif) dan 1.")
+        errors.append("Relative Compactness must be between 0 (exclusive) and 1.")
 
     area_fields = ["Surface Area", "Wall Area", "Roof Area"]
     for field in area_fields:
         val = inputs.get(field, 0)
         if val <= 0:
-            errors.append(f"{field} harus lebih dari 0.")
+            errors.append(f"{field} must be greater than 0.")
 
     for key, val in inputs.items():
         if val < 0:
-            errors.append(f"{key} tidak boleh bernilai negatif.")
+            errors.append(f"{key} cannot be a negative value.")
 
     ga = inputs.get("Glazing Area", -1)
     if not (0.0 <= ga <= 1.0):
-        errors.append("Glazing Area harus antara 0 dan 1.")
+        errors.append("Glazing Area must be between 0 and 1.")
 
     return (len(errors) == 0), errors
 
 
-# ──────────────────────────────────────────────────────────
-# 3. PREDIKSI
-# ──────────────────────────────────────────────────────────
 def predict(model, scaler, inputs: dict) -> dict:
     """
-    Menjalankan prediksi Heating Load dan Cooling Load.
-    inputs : dict dengan key = FEATURE_NAMES
+    Runs predictions for both Heating Load and Cooling Load.
+    inputs : dict with keys matching FEATURE_NAMES
     returns: dict {"Heating Load": float, "Cooling Load": float}
     """
     x = np.array([[inputs[f] for f in FEATURE_NAMES]])
@@ -113,39 +100,33 @@ def predict(model, scaler, inputs: dict) -> dict:
     }
 
 
-# ──────────────────────────────────────────────────────────
-# 4. ENERGY EFFICIENCY SCORE
-# ──────────────────────────────────────────────────────────
 def energy_efficiency_score(hl: float, cl: float) -> tuple[int, str, str]:
     """
-    Menghitung Energy Efficiency Score (0-100) dan kategori.
+    Calculates the Energy Efficiency Score (0-100) and its category.
 
-    Pendekatan:
-      - Rata-rata HL dan CL dari dataset UCI ≈ 22 kWh/m²
-      - Nilai maksimum efisiensi referensi = 10 kWh/m² (sangat hemat)
-      - Nilai minimum = 45 kWh/m² (sangat boros)
+    Approach:
+      - Average HL and CL from the UCI dataset ≈ 22 kWh/m²
+      - Maximum reference efficiency value = 10 kWh/m² (Highly efficient)
+      - Minimum reference efficiency value = 45 kWh/m² (Highly inefficient)
 
     Returns: (score: int, category: str, color: str)
     """
     avg = (hl + cl) / 2
-    # Normalisasi: skor 100 jika avg ≤ 10, skor 0 jika avg ≥ 45
+    # Normalization: score 100 if avg <= 10, score 0 if avg >= 45
     score = int(np.clip((45 - avg) / (45 - 10) * 100, 0, 100))
 
     if score >= 80:
-        return score, "Tinggi", "#22c55e"
+        return score, "High", "#22c55e"
     elif score >= 60:
-        return score, "Sedang", "#f59e0b"
+        return score, "Medium", "#f59e0b"
     else:
-        return score, "Rendah", "#ef4444"
+        return score, "Low", "#ef4444"
 
 
-# ──────────────────────────────────────────────────────────
-# 5. FEATURE IMPORTANCE
-# ──────────────────────────────────────────────────────────
 def get_feature_importance(model) -> pd.DataFrame:
     """
-    Mengambil rata-rata feature importance dari semua estimator.
-    Returns DataFrame dengan kolom: Feature, Importance, Pct
+    Extracts the mean feature importance across all estimators.
+    Returns a DataFrame with columns: Feature, Importance, Pct
     """
     importances = np.mean(
         [est.feature_importances_ for est in model.estimators_], axis=0
@@ -158,19 +139,17 @@ def get_feature_importance(model) -> pd.DataFrame:
     }).sort_values("Importance", ascending=False).reset_index(drop=True)
     return df
 
+
 def get_local_explanation(model, scaler, inputs):
     """
-    Feature importance yang menyesuaikan dengan input user
+    Computes instance-level feature importance customized to the user's inputs.
     """
-
     x = np.array([[inputs[f] for f in FEATURE_NAMES]])
     x_scaled = scaler.transform(x)
 
-    # pakai estimator pertama (Heating Load)
+    # Use the first estimator (Heating Load) for local explanation
     explainer = shap.TreeExplainer(model.estimators_[0])
-
     shap_values = explainer.shap_values(x_scaled)
-
     contribution = np.abs(shap_values[0])
 
     df = pd.DataFrame({
@@ -191,88 +170,80 @@ def get_local_explanation(model, scaler, inputs):
 
     return df
 
-# ──────────────────────────────────────────────────────────
-# 6. REKOMENDASI OTOMATIS
-# ──────────────────────────────────────────────────────────
+
 RECOMMENDATION_MAP = {
     "Relative Compactness": (
-        "🏠 Kompaktkan Desain Bangunan\n\n"
-        "Relative Compactness merupakan faktor dominan pada prediksi ini. "
-        "Semakin kompak sebuah bangunan, semakin kecil permukaan yang bersentuhan "
-        "dengan lingkungan luar, sehingga kehilangan energi berkurang.\n\n"
-        "→ Pertimbangkan desain yang lebih kompak dan hindari bentuk bangunan "
-        "yang terlalu memanjang atau berliku."
+        "Compact the Building Design\n\n"
+        "Relative Compactness is a dominant factor in this prediction. "
+        "A more compact building minimizes the surface area exposed to the "
+        "external environment, reducing unwanted energy loss.\n\n"
+        "→ Consider a tighter building footprint and avoid configurations that "
+        "are excessively elongated or complex."
     ),
     "Surface Area": (
-        "📐 Optimasi Luas Permukaan\n\n"
-        "Luas permukaan yang besar memperbesar area pertukaran panas antara "
-        "bangunan dan lingkungan. Hal ini meningkatkan kebutuhan pendinginan "
-        "maupun pemanasan.\n\n"
-        "→ Kurangi luas permukaan total atau tingkatkan kualitas insulasi pada "
-        "seluruh permukaan eksterior bangunan."
+        "Optimize Total Surface Area\n\n"
+        "A larger overall surface area expands the envelope available for heat exchange "
+        "between the building and the outdoors. This increases both cooling and heating loads.\n\n"
+        "→ Reduce the total surface envelope area or enhance insulation specifications "
+        "across all exterior building assemblies."
     ),
     "Wall Area": (
-        "🧱 Tingkatkan Insulasi Dinding\n\n"
-        "Wall Area adalah faktor yang paling memengaruhi prediksi ini. "
-        "Dinding dengan luas besar atau insulasi rendah meningkatkan transfer "
-        "panas secara signifikan.\n\n"
-        "→ Gunakan material dinding dengan nilai insulasi termal (R-value) "
-        "yang lebih tinggi, seperti bata berongga, panel sandwich, atau "
-        "dinding berlapis insulasi mineral."
+        "Enhance Wall Insulation\n\n"
+        "Wall Area is the most significant structural driver in this scenario. "
+        "Expansive wall surface areas or subpar thermal insulation drastically accelerate "
+        "heat transfer rates.\n\n"
+        "→ Deploy building materials with superior thermal resistance (R-values), "
+        "such as autoclaved aerated concrete (AAC), sandwich panels, or continuous mineral wool cavity insulation."
     ),
     "Roof Area": (
-        "🏚️ Optimalkan Desain Atap\n\n"
-        "Atap adalah area yang menerima paparan radiasi matahari terbesar. "
-        "Roof Area besar tanpa insulasi yang memadai meningkatkan Cooling Load "
-        "secara drastis.\n\n"
-        "→ Pertimbangkan pengurangan luas atap, penambahan insulasi atap, "
-        "penggunaan cool roof coating, atau pemasangan panel surya untuk "
-        "mengurangi panas yang masuk."
+        "Optimize Roof Design\n\n"
+        "The roof receives the highest density of direct solar radiation. "
+        "A vast roof area combined with poor insulation metrics will spike the Cooling Load "
+        "substantially.\n\n"
+        "→ Explore roof area reductions, apply continuous reflective cool roof coatings, "
+        "or integrate solar photovoltaic arrays to shade the roof deck."
     ),
     "Overall Height": (
-        "🏢 Evaluasi Ketinggian Bangunan\n\n"
-        "Ketinggian bangunan berpengaruh pada volume udara yang harus "
-        "dikondisikan serta paparan angin.\n\n"
-        "→ Pertimbangkan ceiling height yang optimal dan pastikan sistem "
-        "HVAC dimensinya sesuai dengan volume bangunan."
+        "Evaluate Building Height\n\n"
+        "Building height determines the aggregate volume of conditioned air spaces "
+        "and dictates exposure profiles to wind loads.\n\n"
+        "→ Establish optimal floor-to-ceiling heights and verify that the HVAC air-side "
+        "distribution systems are sized strictly to the calculated volumetric space."
     ),
     "Orientation": (
-        "🧭 Optimasi Orientasi Bangunan\n\n"
-        "Orientasi bangunan menentukan seberapa besar paparan sinar matahari "
-        "langsung yang diterima fasad. Orientasi yang salah dapat "
-        "meningkatkan Cooling Load secara signifikan.\n\n"
-        "→ Arahkan sisi bangunan yang memiliki kaca/jendela terbesar menghadap "
-        "Utara atau Selatan untuk mengurangi paparan matahari pagi dan sore."
+        "Optimize Building Orientation\n\n"
+        "Building orientation sets the localized solar radiation loads impacting the facade. "
+        "An unfavorable orientation can induce excessive peak cooling demands.\n\n"
+        "→ Align primary facades containing major glazing installations toward the North or South "
+        "to limit direct early morning and late afternoon solar heat gains."
     ),
     "Glazing Area": (
-        "🪟 Kurangi atau Tingkatkan Kualitas Kaca\n\n"
-        "Glazing Area (luas kaca) adalah faktor TERBESAR pada prediksi ini. "
-        "Kaca adalah konduktor panas yang buruk — kaca biasa memiliki nilai "
-        "U-value yang sangat tinggi, menyebabkan transfer panas masif.\n\n"
-        "→ Pertimbangkan mengurangi luas kaca total, menggunakan **low-e glass** "
-        "(emisi rendah), double-glazed, atau triple-glazed untuk mengurangi "
-        "transfer panas hingga 50%."
+        "Reduce Glazing Area or Upgrade Glass Specifications\n\n"
+        "Glazing Area is the LARGEST single contributor to this analytical model. "
+        "Standard monolithic glass features poor thermal resistance, creating massive "
+        "thermal bridges via high U-values.\n\n"
+        "→ Restrict the total window-to-wall ratio, or transition to high-performance low-e, "
+        "double-glazed, or triple-glazed setups to cut heat transfer indices up to 50%."
     ),
     "Glazing Area Distribution": (
-        "🔲 Distribusikan Kaca Secara Strategis\n\n"
-        "Distribusi area kaca per sisi bangunan sangat memengaruhi efisiensi. "
-        "Kaca yang terkonsentrasi pada sisi Barat/Timur memaksimalkan "
-        "paparan matahari pagi dan sore.\n\n"
-        "→ Distribusikan kaca secara merata atau fokuskan pada sisi Utara/Selatan "
-        "untuk mengurangi panas masuk (solar heat gain) secara efektif."
+        "Distribute Glazing Strategically\n\n"
+        "The spatial distribution of windows across various building faces heavily alters thermal efficiency. "
+        "Concentrating windows on East or West exposures maximizes intense solar heat stress.\n\n"
+        "→ Distribute glazing apertures uniformly or prioritize concentrations on North and South facades "
+        "to manage passive solar heat gain values systematically."
     ),
 }
 
 
 def get_recommendation(feature_importance_df: pd.DataFrame) -> list[dict]:
     """
-    Mengembalikan daftar rekomendasi berdasarkan urutan Feature Importance.
+    Generates a structured list of recommendations mapped to the top 4 Feature Importance metrics.
     Returns: list of dict {"rank", "feature", "pct", "text"}
     """
     recs = []
     for rank, row in feature_importance_df.head(4).iterrows():
         feat = row["Feature"]
-        text = RECOMMENDATION_MAP.get(feat, "Perhatikan desain pada aspek ini.")
+        text = RECOMMENDATION_MAP.get(feat, "Monitor design constraints for this feature.")
         recs.append({
             "rank": rank + 1,
             "feature": feat,
@@ -282,26 +253,23 @@ def get_recommendation(feature_importance_df: pd.DataFrame) -> list[dict]:
     return recs
 
 
-# ──────────────────────────────────────────────────────────
-# 7. PERFORMANCE MAP (P-MAP)
-# ──────────────────────────────────────────────────────────
 def make_pmap_figure(hl_user: float = None, cl_user: float = None) -> go.Figure:
     """
-    Membuat Performance Map (P-Map) dengan zona efisiensi dan
-    posisi bangunan pengguna.
+    Generates a Performance Map (P-Map) illustrating localized efficiency zones 
+    and mapping the user's specific building metrics.
     """
-    # Grid zona efisiensi
+    # Efficiency zone grid boundaries
     hl_range = np.linspace(5, 50, 200)
     cl_range = np.linspace(5, 50, 200)
     HL_grid, CL_grid = np.meshgrid(hl_range, cl_range)
     avg_grid = (HL_grid + CL_grid) / 2
 
-    # Skor zona
+    # Map grid scores
     score_grid = np.clip((45 - avg_grid) / (45 - 10) * 100, 0, 100)
 
     fig = go.Figure()
 
-    # Kontour zona
+    # Efficiency zones contour layer
     fig.add_trace(go.Contour(
         x=hl_range,
         y=cl_range,
@@ -320,14 +288,14 @@ def make_pmap_figure(hl_user: float = None, cl_user: float = None) -> go.Figure:
         colorbar=dict(
             title="Efficiency Score",
             tickvals=[0, 20, 40, 60, 80, 100],
-            ticktext=["0", "20", "40 Rendah", "60", "80 Sedang", "100 Tinggi"],
+            ticktext=["0", "20", "40 Low", "60", "80 Medium", "100 High"],
         ),
         opacity=0.75,
-        name="Zona Efisiensi",
+        name="Efficiency Zones",
         hovertemplate="HL=%{x:.1f}  CL=%{y:.1f}  Score=%{z:.0f}<extra></extra>",
     ))
 
-    # Dataset referensi (titik sampel acak)
+    # Reference dataset markers (random sample scatter plot)
     np.random.seed(0)
     n_ref = 80
     hl_ref = np.random.uniform(6, 45, n_ref)
@@ -336,32 +304,32 @@ def make_pmap_figure(hl_user: float = None, cl_user: float = None) -> go.Figure:
         x=hl_ref, y=cl_ref,
         mode="markers",
         marker=dict(size=5, color="rgba(255,255,255,0.35)", line=dict(width=1, color="white")),
-        name="Referensi Dataset",
-        hovertemplate="HL=%{x:.1f}  CL=%{y:.1f}<extra>Referensi</extra>",
+        name="Dataset Reference",
+        hovertemplate="HL=%{x:.1f}  CL=%{y:.1f}<extra>Reference</extra>",
     ))
 
-    # Posisi bangunan pengguna
+    # User building placement marker
     if hl_user is not None and cl_user is not None:
         score_user, cat, color = energy_efficiency_score(hl_user, cl_user)
         fig.add_trace(go.Scatter(
             x=[hl_user], y=[cl_user],
             mode="markers+text",
             marker=dict(size=18, color=color, symbol="star", line=dict(width=2, color="white")),
-            text=[f"  Anda\n({score_user}/100)"],
+            text=[f"  You\n({score_user}/100)"],
             textposition="middle right",
             textfont=dict(size=12, color="white"),
-            name=f"Bangunan Anda ({cat})",
+            name=f"Your Building ({cat})",
             hovertemplate=(
-                f"<b>Bangunan Anda</b><br>"
+                f"<b>Your Building</b><br>"
                 f"Heating Load : {hl_user} kWh/m²<br>"
                 f"Cooling Load : {cl_user} kWh/m²<br>"
                 f"Score        : {score_user}/100<br>"
-                f"Kategori     : {cat}<extra></extra>"
+                f"Category     : {cat}<extra></extra>"
             ),
         ))
 
     fig.update_layout(
-        title=dict(text="🗺️ Performance Map — Posisi Efisiensi Energi Bangunan", font=dict(size=16)),
+        title=dict(text="🗺️ Performance Map — Building Energy Efficiency Placement", font=dict(size=16)),
         xaxis=dict(title="Heating Load (kWh/m²)", showgrid=True, gridcolor="rgba(255,255,255,0.1)"),
         yaxis=dict(title="Cooling Load (kWh/m²)", showgrid=True, gridcolor="rgba(255,255,255,0.1)"),
         paper_bgcolor="rgba(0,0,0,0)",
@@ -373,7 +341,6 @@ def make_pmap_figure(hl_user: float = None, cl_user: float = None) -> go.Figure:
             y=1.02,
             xanchor="left",
             x=0.75,
-
             bgcolor="rgba(0,0,0,0.4)",
             bordercolor="rgba(255,255,255,0.2)",
             borderwidth=1,
@@ -384,11 +351,8 @@ def make_pmap_figure(hl_user: float = None, cl_user: float = None) -> go.Figure:
     return fig
 
 
-# ──────────────────────────────────────────────────────────
-# 8. FEATURE IMPORTANCE CHART
-# ──────────────────────────────────────────────────────────
 def make_importance_figure(fi_df: pd.DataFrame) -> go.Figure:
-    """Bar chart Feature Importance (Plotly)."""
+    """Creates a Feature Importance bar chart (Plotly)."""
     colors = px.colors.sequential.Viridis_r[:len(fi_df)]
     fig = go.Figure(go.Bar(
         x=fi_df["Feature"],
@@ -396,12 +360,12 @@ def make_importance_figure(fi_df: pd.DataFrame) -> go.Figure:
         marker_color=colors,
         text=[f"{v:.1f}%" for v in fi_df["Pct"]],
         textposition="outside",
-        hovertemplate="%{x}<br>Kontribusi: %{y:.1f}%<extra></extra>",
+        hovertemplate="%{x}<br>Contribution: %{y:.1f}%<extra></extra>",
     ))
     fig.update_layout(
-        title="📊 Kontribusi Fitur terhadap Prediksi (Feature Importance)",
-        xaxis=dict(title="Fitur Bangunan"),
-        yaxis=dict(title="Kontribusi (%)", range=[0, fi_df["Pct"].max() * 1.25]),
+        title="📊 Feature Contribution toward Prediction (Feature Importance)",
+        xaxis=dict(title="Building Features"),
+        yaxis=dict(title="Contribution (%)", range=[0, fi_df["Pct"].max() * 1.25]),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(15,20,40,0.85)",
         font=dict(color="white"),
@@ -412,9 +376,6 @@ def make_importance_figure(fi_df: pd.DataFrame) -> go.Figure:
     return fig
 
 
-# ──────────────────────────────────────────────────────────
-# 9. WHAT-IF ANALYSIS
-# ──────────────────────────────────────────────────────────
 def what_if_analysis(
     model,
     scaler,
@@ -423,31 +384,31 @@ def what_if_analysis(
     pct_change: float,
 ) -> dict:
     """
-    Simulasi perubahan satu fitur.
+    Simulates dimensional changes to a single parameter.
 
     Parameters
     ----------
-    base_inputs      : input asli pengguna
-    feature_to_change: nama fitur yang diubah
-    pct_change       : perubahan dalam persen (mis. -10 untuk turun 10%)
+    base_inputs      : User's baseline configuration inputs
+    feature_to_change: Target feature string name intended for modification
+    pct_change       : Delta value expressed as percentage (e.g., -10 for a 10% decrease)
 
-    Returns dict dengan keys:
+    Returns a dictionary containing delta evaluation keys:
         before_hl, before_cl, before_score, before_cat,
         after_hl, after_cl, after_score, after_cat,
         delta_hl, delta_cl, delta_score
     """
-    # Prediksi sebelum
+    # Evaluate baseline conditions
     before_pred = predict(model, scaler, base_inputs)
     bhl = before_pred["Heating Load"]
     bcl = before_pred["Cooling Load"]
     bscore, bcat, _ = energy_efficiency_score(bhl, bcl)
 
-    # Modifikasi fitur
+    # Perform structural modification
     modified = base_inputs.copy()
     original_val = modified[feature_to_change]
     new_val = original_val * (1 + pct_change / 100)
 
-    # Klem nilai agar tetap valid
+    # Enforce strict domain bounding conditions
     if feature_to_change == "Relative Compactness":
         new_val = np.clip(new_val, 0.01, 1.0)
     elif feature_to_change == "Glazing Area":
@@ -457,7 +418,7 @@ def what_if_analysis(
 
     modified[feature_to_change] = new_val
 
-    # Prediksi sesudah
+    # Evaluate scenario adjustments
     after_pred = predict(model, scaler, modified)
     ahl = after_pred["Heating Load"]
     acl = after_pred["Cooling Load"]
@@ -476,9 +437,6 @@ def what_if_analysis(
     }
 
 
-# ──────────────────────────────────────────────────────────
-# 10. ESTIMASI BIAYA OPERASIONAL
-# ──────────────────────────────────────────────────────────
 def estimate_cost(
     hl: float,
     cl: float,
@@ -486,28 +444,25 @@ def estimate_cost(
     pln_rate: float = DEFAULT_PLN_RATE,
 ) -> dict:
     """
-    Estimasi biaya listrik bulanan.
+    Estimates basic monthly utility outlays.
 
-    Asumsi:
-    - Konsumsi = (HL + CL) × area_m2 kWh/bulan
-    - Tarif PLN (Rp/kWh) dapat dikustomisasi
+    Assumptions:
+    - Consumption = (HL + CL) * area_m2 kWh/month
+    - PLN Rate (Rp/kWh) can be configured dynamically by the user
 
-    Returns: dict dengan konsumsi_kwh dan biaya_rp per bulan
+    Returns: dict containing consumption_kwh and cost_rp metrics per month
     """
-    total_load_kwh = (hl + cl) * area_m2          # kWh/bulan
-    biaya_rp       = total_load_kwh * pln_rate     # Rp/bulan
+    total_load_kwh = (hl + cl) * area_m2          # kWh/month
+    biaya_rp       = total_load_kwh * pln_rate     # Rp/month
 
     return {
-        "konsumsi_kwh": round(total_load_kwh, 1),
-        "biaya_rp"    : round(biaya_rp, 0),
-        "pln_rate"    : pln_rate,
-        "area_m2"     : area_m2,
+        "consumption_kwh": round(total_load_kwh, 1),
+        "cost_rp"        : round(biaya_rp, 0),
+        "pln_rate"       : pln_rate,
+        "area_m2"        : area_m2,
     }
 
 
-# ──────────────────────────────────────────────────────────
-# HELPER: Format Rupiah
-# ──────────────────────────────────────────────────────────
 def fmt_rp(value: float) -> str:
-    """Format angka ke string Rupiah. Mis: 317680 → 'Rp 317.680'"""
+    """Formats numeric values to Indonesian Rupiah representation. Ex: 317680 -> 'Rp 317.680'"""
     return f"Rp {int(value):,}".replace(",", ".")

@@ -1,19 +1,19 @@
 """
 app.py
 ======
-Aplikasi Streamlit — Prediksi & Kalkulasi Cooling and Heating Load Bangunan
+Streamlit Application — Building Cooling and Heating Load Prediction & Calculation
 
-Fitur:
-  1. Input Desain Bangunan (Sidebar)
-  2. Validasi Input
-  3. Prediksi (Heating Load & Cooling Load)
+Features:
+  1. Building Design Input (Sidebar)
+  2. Input Validation
+  3. Prediction (Heating Load & Cooling Load)
   4. Energy Efficiency Score
   5. Performance Map (P-Map)
   6. Explainable AI (Feature Importance)
-  7. Rekomendasi Otomatis
+  7. Automated Recommendations
   8. What-If Analysis
 
-Jalankan:
+Run:
   streamlit run app.py
 """
 
@@ -36,9 +36,6 @@ from helper import (
     TARGET_NAMES,  
 )
 
-# ──────────────────────────────────────────────────────────
-# PAGE CONFIG
-# ──────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="EnergyPredict AI",
     page_icon="⚡",
@@ -46,244 +43,239 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ──────────────────────────────────────────────────────────
-# CUSTOM CSS
-# ──────────────────────────────────────────────────────────
 st.markdown("""
-
 <style>
+    /* 1. Global & Theme Configurations */
     :root {
         color-scheme: dark !important;
     }
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght=0,200..800;1,200..800&family=Inter:wght@300..700&display=swap');
           
-  html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+    html, body, [class*="css"] { 
+        font-family: 'Inter', sans-serif; 
+    }
 
-.stApp {
-    background: linear-gradient(
-        135deg,
-        #2A3324 0%,
-        #31452B 50%,
-        #3A5231 100%
-    );
-}
+    .stApp {
+        background: linear-gradient(
+            135deg,
+            #2A3324 0%,
+            #31452B 50%,
+            #3A5231 100%
+        );
+    }
 
-  /* Sidebar */
-[data-testid="stSidebar"] {
-    background: linear-gradient(
-        180deg,
-        #EFE5D1 0%,
-        #E8DDC7 100%
-    );
-    border-right: 2px solid #E6A59E;
-}
-            
-[data-testid="stSidebar"] {
-    color: #5A4A42 !important;
-}
+    /* 2. Sidebar Layout & Typography Optimization */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(
+            180deg,
+            #EFE5D1 0%,
+            #E8DDC7 100%
+        );
+        border-right: 2px solid #E6A59E;
+        color: #5A4A42 !important;
+    }
 
-[data-testid="stSidebar"] label {
-    color: #5A4A42 !important;
-}
+    /* Memperketat vertical spacing pada struktur internal sidebar */
+    [data-testid="stSidebarUserContent"] {
+        padding-top: 1.5rem !important;
+        gap: 0.5rem !important;
+    }
 
-[data-testid="stSidebar"] p {
-    color: #5A4A42 !important;
-}
+    [data-testid="stSidebarUserContent"] hr {
+        margin: 0.8rem 0 !important;
+        border-color: rgba(234,156,175,0.25) !important;
+    }
 
-[data-testid="stSidebar"] {
-    color: #5A4A42 !important;
-}
-            
-  /* Main header */
-  .main-header {
-    background: linear-gradient(
-        135deg,
-        rgba(230,165,158,0.18) 0%,
-        rgba(180,212,122,0.18) 100%
-    );
-    border: 1px solid rgba(230,165,158,0.35);
-}
-            
-  .main-header h1 {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 2.4rem;
-    font-weight: 700;
-    color: #EFE5D1;
-    letter-spacing: 1px;
-    margin: 0;
-  }
-  .main-header p { color: #E7DCE2; margin: 0.4rem 0 0; font-size: 0.95rem; }
+    /* Penegasan visual komponen teks di dalam sidebar */
+    [data-testid="stSidebar"] label {
+        color: #5A4A42 !important;
+        font-weight: 600 !important;
+    }
 
-  /* Metric cards */
-  .metric-card {
-    background: rgba(44,58,38,0.85);
-    border: 1px solid rgba(180,212,122,0.35);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    border-radius: 12px;
-    padding: 1.2rem 1.4rem;
-    margin: 0.4rem 0;
-    text-align: center;
-    backdrop-filter: blur(6px);
-  }
-  .metric-label { font-size: 0.78rem; color: #E7DCE2; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.3rem; }
-  .metric-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2.2rem; font-weight: 700; color: #F3EEF1; }
-  .metric-unit  { font-size: 0.8rem; color: #D6B9C3; }
+    [data-testid="stSidebar"] p {
+        color: #5A4A42 !important;
+    }
 
-  /* Score badge */
-  .score-badge {
-    display: inline-block;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 3rem;
-    font-weight: 700;
-    padding: 0.5rem 1.5rem;
-    border-radius: 12px;
-    margin: 0.5rem 0;
-  }
+    /* Penargetan Tombol Kontrol Collapse Sidebar (Warna Hijau) */
+    [data-testid="stSidebarCollapseButton"] button {
+        color: #3D7D3D !important;
+        background-color: transparent !important;
+    }
+    [data-testid="collapsedControl"] button {
+        color: #3D7D3D !important;
+    }
 
-  /* Section header */
-  .section-header {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: #B4D47A;
-    border-left: 4px solid #3D7D3D;
-    padding-left: 0.8rem;
-    margin: 1.5rem 0 1rem;
-  }
+    /* 3. Main Dashboard Elements */
+    .main-header {
+        background: linear-gradient(
+            135deg,
+            rgba(230,165,158,0.18) 0%,
+            rgba(180,212,122,0.18) 100%
+        );
+        border: 1px solid rgba(230,165,158,0.35);
+        border-radius: 16px !important; /* Mengeliminasi kelancipan sudut */
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+                
+    .main-header h1 {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 2.4rem;
+        font-weight: 700;
+        color: #EFE5D1;
+        letter-spacing: 1px;
+        margin: 0;
+    }
 
-  /* Info box */
-  .info-box {
-    background: rgba(239,229,209,0.06);
-    border: 1px solid rgba(180,212,122,0.25);
-    border-radius: 10px;
-    padding: 1rem 1.2rem;
-    color: #F3EEF1;
-    font-size: 0.88rem;
-    line-height: 1.6;
-  }
+    /* Konsistensi warna sub-header mepet judul, deskripsi data menggunakan abu-abu kecil */
+    .main-header p.sub-title { 
+        color: #EFE5D1; 
+        margin: 0.2rem 0 0 0; 
+        font-size: 1.05rem; 
+        font-weight: 500;
+    }
+    
+    .main-header p.meta-info { 
+        color: #A3A3A3; 
+        margin: 0.3rem 0 0 0; 
+        font-size: 0.8rem; 
+    }
 
-  /* Recommendation card */
-  .rec-card {
-    background: linear-gradient(
-        135deg,
-        rgba(230,165,158,0.12) 0%,
-        rgba(180,212,122,0.12) 100%
-    );
-    border: 1px solid rgba(230,165,158,0.3);
-    border-radius: 12px;
-    padding: 1.2rem 1.4rem;
-    margin: 0.6rem 0;
-    color: #F3EEF1;
-    line-height: 1.7;
-  }
+    /* 4. Tabs Component Layout Alignment */
+    .stTabs {
+        margin-top: 1.5rem !important;
+    }
 
-  /* What-if comparison */
-  .compare-before {
-    background: rgba(230,165,158,0.10);
-    border: 1px solid rgba(230,165,158,0.35);
-    border-radius: 10px;
-    padding: 1rem 1.2rem;
-    text-align: center;
-  }
-  .compare-after {
-    background: rgba(180,212,122,0.10);
-    border: 1px solid rgba(180,212,122,0.35);
-    border-radius: 10px;
-    padding: 1rem 1.2rem;
-    text-align: center;
-  }
+    .stTabs [data-baseweb="tab"] {
+        background: #EFE5D1;
+        color: #5A4A42;
+        border-radius: 12px 12px 0 0;
+        margin-right: 6px;
+        padding: 10px 18px;
+        font-weight: 600;
+    }
 
-<p style="
-font-size:0.78rem;
-margin-top:0.5rem;
-color:#B4D47A;
-font-weight:500;
-">
-  /* Hide Streamlit default elements */
-  #MainMenu, footer { visibility: hidden; }
+    .stTabs [aria-selected="true"] {
+        background: #3D7D3D !important;
+        color: white !important;
+    }
 
-  /* Tab style */
-  .stTabs [data-baseweb="tab"] {
-    background: #EFE5D1;
-    color: #5A4A42;
-    border-radius: 12px 12px 0 0;
-    margin-right: 6px;
-    padding: 10px 18px;
-    font-weight: 600;
-  }
-  .stTabs [aria-selected="true"] {
-    background: #3D7D3D !important;
-    color: white !important;
-}
+    /* 5. Metrics & Custom Cards */
+    .metric-card {
+        background: rgba(44,58,38,0.85);
+        border: 1px solid rgba(180,212,122,0.35);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        border-radius: 12px;
+        padding: 1.2rem 1.4rem;
+        margin: 0.4rem 0;
+        text-align: center;
+        backdrop-filter: blur(6px);
+    }
+    .metric-label { font-size: 0.78rem; color: #E7DCE2; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.3rem; }
+    .metric-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2.2rem; font-weight: 700; color: #F3EEF1; }
+    .metric-unit  { font-size: 0.8rem; color: #D6B9C3; }
 
-  /* Divider */
-  hr {
-    border-color: rgba(234,156,175,0.25) !important;
-}
+    .score-badge {
+        display: inline-block;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 3rem;
+        font-weight: 700;
+        padding: 0.5rem 1.5rem;
+        border-radius: 12px;
+        margin: 0.5rem 0;
+    }
 
-  /* Number input */
-  .stNumberInput input {
-    background: rgba(243,238,241,0.08) !important;
-    color: #F3EEF1 !important;
-    border: 1px solid rgba(234,156,175,0.3) !important;
-}
+    .section-header {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #B4D47A;
+        border-left: 4px solid #3D7D3D;
+        padding-left: 0.8rem;
+        margin: 1.5rem 0 1rem;
+    }
 
-/* Selectbox */
-.stSelectbox * {
-    color: #F3EEF1 !important;
-}
+    .info-box {
+        background: rgba(239,229,209,0.06);
+        border: 1px solid rgba(180,212,122,0.25);
+        border-radius: 10px;
+        padding: 1rem 1.2rem;
+        color: #F3EEF1;
+        font-size: 0.88rem;
+        line-height: 1.6;
+    }
 
-/* Selectbox text */
-[data-baseweb="select"] > div {
-    color: #F3EEF1 !important;
-}
+    .rec-card {
+        background: linear-gradient(
+            135deg,
+            rgba(230,165,158,0.12) 0%,
+            rgba(180,212,122,0.12) 100%
+        );
+        border: 1px solid rgba(230,165,158,0.3);
+        border-radius: 12px;
+        padding: 1.2rem 1.4rem;
+        margin: 0.6rem 0;
+        color: #F3EEF1;
+        line-height: 1.7;
+    }
 
-/* Text yang sedang dipilih */
-[data-baseweb="select"] span {
-    color: #F3EEF1 !important;
-}
+    .compare-before {
+        background: rgba(230,165,158,0.10);
+        border: 1px solid rgba(230,165,158,0.35);
+        border-radius: 10px;
+        padding: 1rem 1.2rem;
+        text-align: center;
+    }
+    .compare-after {
+        background: rgba(180,212,122,0.10);
+        border: 1px solid rgba(180,212,122,0.35);
+        border-radius: 10px;
+        padding: 1rem 1.2rem;
+        text-align: center;
+    }
 
-/* Input selectbox */
-[data-baseweb="select"] input {
-    color: #F3EEF1 !important;
-}
+    /* 6. Form Inputs & Interactive Components */
+    .stNumberInput input {
+        background: rgba(243,238,241,0.08) !important;
+        color: #F3EEF1 !important;
+        border: 1px solid rgba(234,156,175,0.3) !important;
+    }
 
-/* Dropdown menu */
-div[role="listbox"] {
-    background-color: #24311F !important;
-}
+    .stSelectbox *, [data-baseweb="select"] > div, [data-baseweb="select"] span, [data-baseweb="select"] input {
+        color: #F3EEF1 !important;
+    }
 
-div[role="option"] {
-    color: #F3EEF1 !important;
-}
-            
+    div[role="listbox"] {
+        background-color: #24311F !important;
+    }
 
-  /* Button */
-  .stButton > button {
-    background: linear-gradient(
-        135deg,
-        #B4D47A 0%,
-        #3D7D3D 100%
-    );
-    color: white;
-    border: none;
-    border-radius: 12px;
-}
-  .stButton > button:hover { opacity: 0.9; }
-            
+    div[role="option"] {
+        color: #F3EEF1 !important;
+    }
 
- :root {
-    color-scheme: dark !important;
-}           
+    .stButton > button {
+        background: linear-gradient(
+            135deg,
+            #B4D47A 0%,
+            #3D7D3D 100%
+        );
+        color: white;
+        border: none;
+        border-radius: 12px;
+    }
+    .stButton > button:hover { 
+        opacity: 0.9; 
+    }
 
+    /* Hide Default Elements */
+    #MainMenu, footer { 
+        visibility: hidden; 
+    }
 </style>
 """, unsafe_allow_html=True)
 
 
-# ──────────────────────────────────────────────────────────
-# LOAD MODEL (cache)
-# ──────────────────────────────────────────────────────────
-@st.cache_resource(show_spinner="Memuat model AI...")
+@st.cache_resource(show_spinner="Loading AI model...")
 def get_model():
     return load_model()
 
@@ -292,63 +284,54 @@ model, scaler, feature_names = get_model()
 model_loaded = model is not None
 
 
-# ──────────────────────────────────────────────────────────
-# HEADER
-# ──────────────────────────────────────────────────────────
 st.markdown("""
 <div class="main-header">
-  <h1>⚡ EnergyPredict AI</h1>
-  <p>Prediksi & Kalkulasi Heating Load · Cooling Load · Efisiensi Energi Bangunan</p>
-    Berbasis UCI Energy Efficiency Dataset · Random Forest Regressor · MultiOutputRegressor
+  <h1>EnergyPredict AI</h1>
+  <p>Predict & Calculate Building Heating Load · Cooling Load · Energy Efficiency</p>
+    Based on UCI Energy Efficiency Dataset · Random Forest Regressor · MultiOutputRegressor
   </p>
 </div>
 """, unsafe_allow_html=True)
 
 if not model_loaded:
     st.error(
-        "⚠️ **Model belum tersedia.** Jalankan `python train_model.py` terlebih dahulu "
-        "untuk melatih dan menyimpan model, kemudian refresh halaman ini."
+        "**Model not available.** Please run `python train_model.py` first "
+        "to train and save the model, then refresh this page."
     )
     st.stop()
 
 
-# ──────────────────────────────────────────────────────────
-# SIDEBAR — INPUT DESAIN BANGUNAN
-# ──────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("Input Desain Bangunan")
+    st.markdown("Building Design Input")
     st.markdown("---")
 
-    st.markdown("#### Karakteristik Geometri")
+    st.markdown("#### Geometric Characteristics")
     rc  = st.slider("Relative Compactness",  0.01, 1.00, 0.76, 0.01,
-                    help="Rasio volume bangunan terhadap permukaan (0–1)")
+                    help="Ratio of building volume to surface area (0–1)")
     sa  = st.number_input("Surface Area (m²)",    min_value=1.0, max_value=2000.0, value=661.5, step=1.0)
     wa  = st.number_input("Wall Area (m²)",        min_value=1.0, max_value=2000.0, value=318.5, step=1.0)
     ra  = st.number_input("Roof Area (m²)",        min_value=1.0, max_value=2000.0, value=122.5, step=0.5)
     oh  = st.selectbox("Overall Height (m)",    [3.5, 7.0], index=1,
-                       help="Pilih tinggi bangunan: 3.5m (1 lantai) atau 7.0m (2 lantai)")
+                       help="Select building height: 3.5m (1 floor) or 7.0m (2 floors)")
 
     st.markdown("---")
-    st.markdown("#### Orientasi & Kaca")
-    orient_labels = {2: "2 — Utara", 3: "3 — Timur", 4: "4 — Selatan", 5: "5 — Barat"}
+    st.markdown("#### Orientation & Glazing")
+    orient_labels = {2: "2 — North", 3: "3 — East", 4: "4 — South", 5: "5 — West"}
     orient_sel = st.selectbox("Orientation", list(orient_labels.keys()),
                               format_func=lambda x: orient_labels[x],
-                              help="Arah hadap fasad utama bangunan")
-    ga  = st.slider("Glazing Area (rasio)", 0.00, 1.00, 0.25, 0.05,
-                    help="Proporsi luas kaca terhadap total fasad (0–1)")
-    gad_labels = {0: "0 — Tidak ada kaca", 1: "1 — Seragam", 2: "2 — N>E=W>S",
+                              help="Facing direction of the main building facade")
+    ga  = st.slider("Glazing Area (ratio)", 0.00, 1.00, 0.25, 0.05,
+                    help="Proportion of window area to total facade area (0–1)")
+    gad_labels = {0: "0 — No glazing", 1: "1 — Uniform", 2: "2 — N>E=W>S",
                   3: "3 — E>W=N>S", 4: "4 — S>E=W>N", 5: "5 — S>N=E>W"}
     gad = st.selectbox("Glazing Area Distribution", list(gad_labels.keys()),
                        format_func=lambda x: gad_labels[x],
-                       help="Distribusi kaca per sisi bangunan")
+                       help="Distribution of glazing across building sides")
 
     st.markdown("---")
-    predict_btn = st.button("🔍 Prediksi Sekarang", use_container_width=True)
+    predict_btn = st.button("Predict Now", use_container_width=True)
 
 
-# ──────────────────────────────────────────────────────────
-# KUMPULKAN INPUT
-# ──────────────────────────────────────────────────────────
 user_inputs = {
     "Relative Compactness"      : rc,
     "Surface Area"              : sa,
@@ -362,26 +345,20 @@ user_inputs = {
 
 
 
-# ──────────────────────────────────────────────────────────
-# SESSION STATE
-# ──────────────────────────────────────────────────────────
 if "result" not in st.session_state:
     st.session_state.result = None
 if "fi_df" not in st.session_state:
     st.session_state.fi_df = None
 
 
-# ──────────────────────────────────────────────────────────
-# TOMBOL PREDIKSI
-# ──────────────────────────────────────────────────────────
 if predict_btn:
     is_valid, errors = validate_inputs(user_inputs)
     if not is_valid:
         for err in errors:
-            st.error(f"❌ {err}")
+            st.error(f"{err}")
         st.session_state.result = None
     else:
-        with st.spinner("Menjalankan prediksi AI..."):
+        with st.spinner("Running AI prediction..."):
             result = predict(model, scaler, user_inputs)
             fi_df = get_local_explanation(
                 model,
@@ -391,33 +368,27 @@ if predict_btn:
             st.session_state.result    = result
             st.session_state.fi_df    = fi_df
             st.session_state.inputs   = user_inputs.copy()
-        st.success("✅ Prediksi berhasil!")
+        st.success("Prediction successful!")
 
 
-# ──────────────────────────────────────────────────────────
-# MAIN CONTENT TABS
-# ──────────────────────────────────────────────────────────
 tab_pred, tab_xai, tab_whatif = st.tabs([
-    "Hasil Prediksi",
+    "Prediction Results",
     "Explainable AI",
     "What-If Analysis",
 ])
 
 
-# ══════════════════════════════════════════════════════════
-# TAB 1 — HASIL PREDIKSI
-# ══════════════════════════════════════════════════════════
 with tab_pred:
     if st.session_state.result is None:
         st.markdown("""
         <div class="info-box">
-          👈 Isi parameter desain bangunan pada sidebar kiri, lalu tekan
-          <strong>Prediksi Sekarang</strong> untuk melihat hasil analisis energi.
+          Configure the building design parameters in the left sidebar, then press
+          <strong>Predict Now</strong> to view the energy analysis results.
         </div>
         """, unsafe_allow_html=True)
 
-        # Demo preview P-Map kosong
-        st.markdown('<div class="section-header">🗺️ Performance Map (Preview)</div>', unsafe_allow_html=True)
+        # Blank P-Map demo preview
+        st.markdown('<div class="section-header">Performance Map (Preview)</div>', unsafe_allow_html=True)
         fig_demo = make_pmap_figure()
         st.plotly_chart(fig_demo, use_container_width=True)
 
@@ -428,14 +399,13 @@ with tab_pred:
         cl     = res["Cooling Load"]
         score, cat, color_hex = energy_efficiency_score(hl, cl)
         
-        # ── METRIK UTAMA ──────────────────────────────────
-        st.markdown('<div class="section-header">⚡ Hasil Prediksi Energi</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Energy Prediction Results</div>', unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
 
         with col1:
             st.markdown(f"""
             <div class="metric-card">
-              <div class="metric-label">🌡️ Heating Load</div>
+              <div class="metric-label">Heating Load</div>
               <div class="metric-value">{hl}</div>
               <div class="metric-unit">kWh/m²</div>
             </div>""", unsafe_allow_html=True)
@@ -443,53 +413,47 @@ with tab_pred:
         with col2:
             st.markdown(f"""
             <div class="metric-card">
-              <div class="metric-label">❄️ Cooling Load</div>
+              <div class="metric-label">Cooling Load</div>
               <div class="metric-value">{cl}</div>
               <div class="metric-unit">kWh/m²</div>
             </div>""", unsafe_allow_html=True)
 
         with col3:
-            score_bg = {"Tinggi": "rgba(34,197,94,0.15)", "Sedang": "rgba(245,158,11,0.15)", "Rendah": "rgba(239,68,68,0.15)"}[cat]
+            score_bg = {"High": "rgba(34,197,94,0.15)", "Medium": "rgba(245,158,11,0.15)", "Low": "rgba(239,68,68,0.15)"}.get(cat, "rgba(34,197,94,0.15)")
             st.markdown(f"""
             <div class="metric-card" style="background:{score_bg};">
-              <div class="metric-label">⚡ Efficiency Score</div>
+              <div class="metric-label">Efficiency Score</div>
               <div class="metric-value" style="color:{color_hex};">{score}</div>
               <div class="metric-unit">/ 100 — {cat}</div>
             </div>""", unsafe_allow_html=True)
 
 
-        # ── PENJELASAN SKOR ───────────────────────────────
         st.markdown("---")
         score_desc = {
-            "Tinggi": f"🟢 **Bangunan sangat efisien!** Dengan skor **{score}/100**, desain ini termasuk kategori efisiensi **Tinggi**. Kebutuhan energi bangunan ini rendah dan sudah optimal.",
-            "Sedang": f"🟡 **Efisiensi bangunan tergolong sedang.** Skor **{score}/100** menunjukkan ada ruang untuk perbaikan. Perhatikan rekomendasi pada tab XAI untuk meningkatkan efisiensi.",
-            "Rendah": f"🔴 **Bangunan boros energi!** Skor **{score}/100** termasuk kategori efisiensi **Rendah**. Segera lakukan penyesuaian desain sebelum konstruksi untuk mengurangi biaya operasional jangka panjang.",
+            "High": f"**Highly efficient building!** With a score of **{score}/100**, this design falls into the **High** efficiency category. The energy demand for this building is low and well-optimized.",
+            "Medium": f"**Moderate building efficiency.** A score of **{score}/100** indicates room for improvement. Review the recommendations under the XAI tab to enhance energy performance.",
+            "Low": f"**Energy-inefficient building!** A score of **{score}/100** falls into the **Low** efficiency category. Consider revising design parameters prior to construction to minimize long-term operational costs.",
         }
-        st.info(score_desc[cat])
+        st.info(score_desc.get(cat, f"Building falls into the {cat} efficiency category."))
 
-        # ── PERFORMANCE MAP ───────────────────────────────
-        st.markdown('<div class="section-header">🗺️ Performance Map</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Performance Map</div>', unsafe_allow_html=True)
         fig_pmap = make_pmap_figure(hl, cl)
         st.plotly_chart(fig_pmap, use_container_width=True)
 
 
-        # ── INPUT SUMMARY ─────────────────────────────────
-        with st.expander("📋 Ringkasan Parameter Input"):
+        with st.expander("Summary of Input Parameters"):
             inp_df = pd.DataFrame({
-                "Fitur": list(st.session_state.inputs.keys()),
-                "Nilai": [round(v, 4) for v in st.session_state.inputs.values()],
+                "Feature": list(st.session_state.inputs.keys()),
+                "Value": [round(v, 4) for v in st.session_state.inputs.values()],
             })
             st.dataframe(inp_df, use_container_width=True, hide_index=True)
 
 
-# ══════════════════════════════════════════════════════════
-# TAB 2 — EXPLAINABLE AI
-# ══════════════════════════════════════════════════════════
 with tab_xai:
-    st.markdown('<div class="section-header">🔬 Explainable AI — Feature Importance</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Explainable AI — Feature Importance</div>', unsafe_allow_html=True)
 
     if st.session_state.fi_df is None:
-        st.info("Jalankan prediksi terlebih dahulu untuk melihat analisis Explainable AI.")
+        st.info("Run the prediction first to display the Explainable AI analysis.")
     else:
         fi_df = st.session_state.fi_df
         res   = st.session_state.result
@@ -497,72 +461,63 @@ with tab_xai:
         cl    = res["Cooling Load"]
         score, cat, color_hex = energy_efficiency_score(hl, cl)
 
-        # ── PENJELASAN TOP FEATURE ────────────────────────
         top1  = fi_df.iloc[0]
         top1_pct = top1["Pct"]
         st.markdown(f"""
         <div class="info-box">
-          🏆 Faktor yang paling memengaruhi prediksi energi bangunan Anda adalah
-          <strong>{top1['Feature']}</strong> dengan kontribusi <strong>{top1_pct:.1f}%</strong>.
-          Memodifikasi aspek ini akan memberikan dampak terbesar terhadap efisiensi energi.
+          The factor that most influences your building's energy prediction is
+          <strong>{top1['Feature']}</strong> with a contribution of <strong>{top1_pct:.1f}%</strong>.
+          Modifying this specific aspect will yield the highest impact on energy efficiency.
         </div>
         """, unsafe_allow_html=True)
 
-        # ── BAR CHART ─────────────────────────────────────
         fig_fi = make_importance_figure(fi_df)
         st.plotly_chart(fig_fi, use_container_width=True)
 
-        # ── TABEL RINCI ───────────────────────────────────
-        with st.expander("📊 Tabel Rinci Feature Importance"):
+        with st.expander("Detailed Feature Importance Table"):
             display_fi = fi_df[["Feature", "Pct"]].copy()
-            display_fi.columns = ["Fitur Bangunan", "Kontribusi (%)"]
+            display_fi.columns = ["Building Feature", "Contribution (%)"]
             st.dataframe(display_fi, use_container_width=True, hide_index=True)
 
-        # ── REKOMENDASI OTOMATIS ──────────────────────────
-        st.markdown('<div class="section-header">💡 Rekomendasi Desain Otomatis</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Automated Design Recommendations</div>', unsafe_allow_html=True)
         recs = get_recommendation(fi_df)
         for rec in recs:
-            rank_emoji = ["🥇", "🥈", "🥉", "4️⃣"][rec["rank"] - 1]
-            with st.expander(f"{rank_emoji} {rec['feature']} — Kontribusi {rec['pct']:.1f}%", expanded=(rec["rank"] == 1)):
+            rank_label = f"Rank {rec['rank']}"
+            with st.expander(f"{rank_label}: {rec['feature']} — Contribution {rec['pct']:.1f}%", expanded=(rec["rank"] == 1)):
                 st.markdown(f'<div class="rec-card">{rec["text"]}</div>', unsafe_allow_html=True)
 
-        # ── PENJELASAN MATEMATIS ──────────────────────────
-        st.markdown('<div class="section-header">📐 Penjelasan Analitik</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Analytical Breakdown</div>', unsafe_allow_html=True)
         top_features_str = ", ".join([f["feature"] for f in recs[:2]])
         avg_load = (hl + cl) / 2
-        avg_ref  = 22.0  # rata-rata dataset UCI
+        avg_ref  = 22.0  # UCI dataset average reference
         diff_pct = ((avg_load - avg_ref) / avg_ref) * 100
 
         if diff_pct > 0:
             math_text = (
-                f"Bangunan Anda berada pada zona {cat} karena kombinasi "
-                f"{top_features_str} yang tinggi menyebabkan rata-rata beban energi "
-                f"sebesar {avg_load:.1f} kWh/m², yaitu {abs(diff_pct):.1f}% lebih tinggi "
-                f"dibanding rata-rata bangunan efisien pada dataset UCI ({avg_ref} kWh/m²)."
+                f"Your building belongs to the {cat} efficiency zone because the combined effect of "
+                f"high {top_features_str} leads to an average energy load of "
+                f"{avg_load:.1f} kWh/m², which is {abs(diff_pct):.1f}% higher "
+                f"than the average efficient building in the UCI dataset ({avg_ref} kWh/m²)."
             )
         else:
             math_text = (
-                f"Bangunan Anda berada pada zona {cat}. Rata-rata beban energi "
-                f"sebesar {avg_load:.1f} kWh/m², yaitu {abs(diff_pct):.1f}% lebih rendah "
-                f"dibanding rata-rata dataset UCI ({avg_ref} kWh/m²). Desain ini sudah efisien!"
+                f"Your building belongs to the {cat} efficiency zone. The average energy load of "
+                f"{avg_load:.1f} kWh/m² is {abs(diff_pct):.1f}% lower "
+                f"than the UCI dataset benchmark baseline ({avg_ref} kWh/m²). This design is highly optimal!"
             )
 
-        st.markdown(f'<div class="info-box">📌 {math_text}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="info-box">Note: {math_text}</div>', unsafe_allow_html=True)
 
-
-# ══════════════════════════════════════════════════════════
-# TAB 3 — WHAT-IF ANALYSIS
-# ══════════════════════════════════════════════════════════
 with tab_whatif:
-    st.markdown('<div class="section-header">🔀 What-If Analysis</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">What-If Analysis</div>', unsafe_allow_html=True)
 
     if st.session_state.result is None:
-        st.info("Jalankan prediksi terlebih dahulu untuk menggunakan What-If Analysis.")
+        st.info("Run the prediction first to utilize the What-If Analysis workspace.")
     else:
         st.markdown("""
         <div class="info-box">
-          🧭 Simulasikan perubahan pada satu parameter desain dan lihat dampaknya terhadap
-          Heating Load, Cooling Load, dan Energy Efficiency Score secara langsung.
+          Simulate changes to an individual design parameter to instantly assess its impact on
+          Heating Load, Cooling Load, and the cumulative Energy Efficiency Score.
         </div>
         """, unsafe_allow_html=True)
 
@@ -570,40 +525,40 @@ with tab_whatif:
         wi_col1, wi_col2 = st.columns([2, 1])
         with wi_col1:
             feature_wi = st.selectbox(
-                "Pilih Fitur yang Ingin Diubah",
+                "Select Feature to Modify",
                 FEATURE_NAMES,
                 index=FEATURE_NAMES.index("Glazing Area"),
             )
         with wi_col2:
-            pct_wi = st.slider("Perubahan (%)", -50, 50, -10, 5,
-                               help="Negatif = turun, Positif = naik")
+            pct_wi = st.slider("Percentage Change (%)", -50, 50, -10, 5,
+                               help="Negative values decrease; positive values increase the parameter value")
 
-        if st.button("▶ Jalankan Simulasi", use_container_width=False):
-            with st.spinner("Menghitung simulasi..."):
+        if st.button("Run Simulation", use_container_width=False):
+            with st.spinner("Calculating simulation updates..."):
                 wi = what_if_analysis(
                     model, scaler,
                     st.session_state.inputs,
                     feature_wi, pct_wi,
                 )
 
-            # ── SIDE-BY-SIDE ──────────────────────────────
+            # ── SIDE-BY-SIDE COMPARISON ──────────────────────────────
             st.markdown("---")
-            arrow = "⬇" if pct_wi < 0 else "⬆"
+            direction_arrow = "Decreased by" if pct_wi < 0 else "Increased by"
             st.markdown(
-                f"### Hasil Simulasi: **{feature_wi}** {arrow} {abs(pct_wi)}%\n"
-                f"Nilai berubah dari `{wi['original_val']}` → `{wi['modified_val']}`"
+                f"### Simulation Results: **{feature_wi}** {direction_arrow} {abs(pct_wi)}%\n"
+                f"Value shifted from `{wi['original_val']}` → `{wi['modified_val']}`"
             )
 
             bc_col, mid_col, ac_col = st.columns([5, 1, 5])
             with bc_col:
-                scat = {"Tinggi": "🟢", "Sedang": "🟡", "Rendah": "🔴"}
+                scat = {"High": "Green", "Medium": "Yellow", "Low": "Red"}
                 st.markdown(f"""
                 <div class="compare-before">
-                  <h4 style="color:#f87171;">SEBELUM</h4>
-                  <p>🌡️ Heating Load<br><b style="font-size:1.6rem;">{wi['before_hl']}</b> kWh/m²</p>
-                  <p>❄️ Cooling Load<br><b style="font-size:1.6rem;">{wi['before_cl']}</b> kWh/m²</p>
-                  <p>⚡ Efficiency Score<br><b style="font-size:1.8rem;">{wi['before_score']}</b>/100</p>
-                  <p>{scat.get(wi['before_cat'], '🔵')} {wi['before_cat']}</p>
+                  <h4 style="color:#f87171;">BEFORE</h4>
+                  <p>Heating Load<br><b style="font-size:1.6rem;">{wi['before_hl']}</b> kWh/m²</p>
+                  <p>Cooling Load<br><b style="font-size:1.6rem;">{wi['before_cl']}</b> kWh/m²</p>
+                  <p>Efficiency Score<br><b style="font-size:1.8rem;">{wi['before_score']}</b>/100</p>
+                  <p>{scat.get(wi['before_cat'], 'Status')}: {wi['before_cat']}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -613,17 +568,17 @@ with tab_whatif:
             with ac_col:
                 st.markdown(f"""
                 <div class="compare-after">
-                  <h4 style="color:#4ade80;">SESUDAH</h4>
-                  <p>🌡️ Heating Load<br><b style="font-size:1.6rem;">{wi['after_hl']}</b> kWh/m²</p>
-                  <p>❄️ Cooling Load<br><b style="font-size:1.6rem;">{wi['after_cl']}</b> kWh/m²</p>
-                  <p>⚡ Efficiency Score<br><b style="font-size:1.8rem;">{wi['after_score']}</b>/100</p>
-                  <p>{scat.get(wi['after_cat'], '🔵')} {wi['after_cat']}</p>
+                  <h4 style="color:#4ade80;">AFTER</h4>
+                  <p>Heating Load<br><b style="font-size:1.6rem;">{wi['after_hl']}</b> kWh/m²</p>
+                  <p>Cooling Load<br><b style="font-size:1.6rem;">{wi['after_cl']}</b> kWh/m²</p>
+                  <p>Efficiency Score<br><b style="font-size:1.8rem;">{wi['after_score']}</b>/100</p>
+                  <p>{scat.get(wi['after_cat'], 'Status')}: {wi['after_cat']}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
             # ── DELTA METRICS ─────────────────────────────
             st.markdown("---")
-            st.markdown("#### 📉 Perubahan yang Terjadi")
+            st.markdown("#### Observed Variances")
             d1, d2, d3 = st.columns(3)
             with d1:
                 delta_hl = wi['delta_hl']
@@ -638,14 +593,14 @@ with tab_whatif:
             with d3:
                 delta_sc = wi['delta_score']
                 st.metric("Efficiency Score", f"{wi['after_score']}/100",
-                          delta=f"{delta_sc:+d} poin")
+                          delta=f"{delta_sc:+d} points")
 
-            # ── INTERPRETASI ──────────────────────────────
-            direction = "menurun" if (delta_hl + delta_cl) < 0 else "meningkat"
+            # ── INTERPRETATION ──────────────────────────────
+            direction = "decreased" if (delta_hl + delta_cl) < 0 else "increased"
             total_delta_pct = abs((delta_hl + delta_cl) / max((wi['before_hl'] + wi['before_cl']), 0.01) * 100)
             st.info(
-                f"💡 Dengan mengubah **{feature_wi}** sebesar **{pct_wi:+d}%**, "
-                f"total beban energi diperkirakan **{direction}** sekitar **{total_delta_pct:.1f}%**. "
-                f"Efficiency Score berubah dari **{wi['before_score']}** → **{wi['after_score']}** "
-                f"(**{delta_sc:+d} poin**)."
+                f"Analysis: By modifying **{feature_wi}** by **{pct_wi:+d}%**, "
+                f"total energy demand is projected to be **{direction}** by roughly **{total_delta_pct:.1f}%**. "
+                f"The Efficiency Score shifted from **{wi['before_score']}** → **{wi['after_score']}** "
+                f"({delta_sc:+d} points)."
             )

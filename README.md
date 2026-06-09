@@ -120,7 +120,9 @@ streamlit run app.py
 
 ## Tim
 
-Kelompok Energi — AI Project
+240087 - Aisyah Zaimatun Nisa
+240021 - Nailatus Sahlah
+240039 - Hana' Azzahro'
 
 ---
 

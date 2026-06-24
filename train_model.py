@@ -219,6 +219,7 @@ def evaluate_model(model, X_test, y_test):
     print("=" * 55)
 
     y_pred = model.predict(X_test)
+    plot_actual_vs_predicted(y_test, y_pred)
     results = {}
 
     for i, name in enumerate(TARGET_NAMES):
@@ -236,6 +237,50 @@ def evaluate_model(model, X_test, y_test):
     _plot_feature_importance(model)
     return results
 
+def plot_actual_vs_predicted(y_test, y_pred):
+    os.makedirs("outputs", exist_ok=True)
+
+    for i, target in enumerate(TARGET_NAMES):
+
+        plt.figure(figsize=(6,6))
+
+        plt.scatter(
+            y_test[:, i],
+            y_pred[:, i],
+            alpha=0.7
+        )
+
+        min_val = min(
+            y_test[:, i].min(),
+            y_pred[:, i].min()
+        )
+
+        max_val = max(
+            y_test[:, i].max(),
+            y_pred[:, i].max()
+        )
+
+        plt.plot(
+            [min_val, max_val],
+            [min_val, max_val],
+            'r--',
+            linewidth=2
+        )
+
+        plt.xlabel("Actual")
+        plt.ylabel("Predicted")
+        plt.title(f"Actual vs Predicted - {target}")
+
+        plt.tight_layout()
+
+        plt.savefig(
+            f"outputs/actual_vs_predicted_{target.replace(' ','_')}.png",
+            dpi=300
+        )
+
+        plt.close()
+
+    print("✔ Actual vs Predicted plots disimpan")
 
 def _plot_feature_importance(model):
     importances = np.mean(

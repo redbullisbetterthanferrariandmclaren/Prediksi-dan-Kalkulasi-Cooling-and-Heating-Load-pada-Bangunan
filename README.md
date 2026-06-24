@@ -134,3 +134,24 @@ streamlit run app.py
 4. **Modeling** — Random Forest + MultiOutputRegressor
 5. **Evaluation** — MAPE, RMSE, R² Score
 6. **Interpretation & Recommendation** — Skor efisiensi + rekomendasi desain
+
+---
+
+---
+
+## Ethical Analysis
+
+### Transparency
+EnergyPredict AI applies Explainable AI principles through Feature Importance visualization and feature-based recommendations. This approach helps users understand which building parameters have the greatest influence on Heating Load and Cooling Load predictions, making the decision-making process more transparent.
+
+### Reliability
+The model's reliability is evaluated using MAPE, RMSE, and R² Score metrics to measure prediction accuracy. Testing is performed on data separated from the training set to ensure the model can provide consistent and dependable results across different scenarios.
+
+### Human Oversight
+This system is designed as a decision-support tool and is not intended to replace professional analysis. Prediction results should be used as an initial reference and still require consideration from architects, engineers, or other qualified professionals during the building design process.
+
+### Sustainability
+By helping users estimate building energy requirements more accurately, EnergyPredict AI supports the development of energy-efficient building designs. The system can contribute to reducing energy consumption, lowering operational costs, and promoting environmentally sustainable development.
+
+### Limitations and Responsible Use
+The model is trained using the UCI Energy Efficiency Dataset, which contains 768 building samples. Therefore, prediction performance may decrease when applied to buildings with characteristics that differ significantly from those represented in the training data. Users are encouraged to understand these limitations and use the prediction results responsibly as supporting information rather than the sole basis for decision-making.

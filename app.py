@@ -107,11 +107,9 @@ st.markdown("""
             rgba(180,212,122,0.18) 100%
         );
         border: 1px solid rgba(230,165,158,0.35);
-        border-radius: 16px !important; 
+        border-radius: 16px !important; /* Mengeliminasi kelancipan sudut */
         padding: 1.5rem;
         margin-bottom: 1rem;
-        backdrop-filter: blur(10px); /* Efek kaca */
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);    
     }
                 
     .main-header h1 {
@@ -141,19 +139,17 @@ st.markdown("""
     }
 
     .stTabs [data-baseweb="tab"] {
-        background: rgba(239, 229, 209, 0.8);
+        background: #EFE5D1;
         color: #5A4A42;
-        border-radius: 20px; 
-        margin-right: 8px;
-        padding: 8px 20px;
+        border-radius: 12px 12px 0 0;
+        margin-right: 6px;
+        padding: 10px 18px;
         font-weight: 600;
-        border: 1px solid transparent;
-        transition: all 0.3s ease; 
     }
 
-    .stTabs [data-baseweb="tab"]:hover {
-        background: #EFE5D1;
-        transform: translateY(-2px);
+    .stTabs [aria-selected="true"] {
+        background: #3D7D3D !important;
+        color: white !important;
     }
 
     .metric-card {
@@ -193,13 +189,11 @@ st.markdown("""
     .info-box {
         background: rgba(239,229,209,0.06);
         border: 1px solid rgba(180,212,122,0.25);
-        border-left: 4px solid #B4D47A;
-        border-radius: 8px;
+        border-radius: 10px;
         padding: 1rem 1.2rem;
         color: #F3EEF1;
         font-size: 0.88rem;
         line-height: 1.6;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .rec-card {

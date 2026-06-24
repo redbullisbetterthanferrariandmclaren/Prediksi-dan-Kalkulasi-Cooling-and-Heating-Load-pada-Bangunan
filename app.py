@@ -45,7 +45,6 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* 1. Global & Theme Configurations */
     :root {
         color-scheme: dark !important;
     }
@@ -64,7 +63,6 @@ st.markdown("""
         );
     }
 
-    /* 2. Sidebar Layout & Typography Optimization */
     [data-testid="stSidebar"] {
         background: linear-gradient(
             180deg,
@@ -75,7 +73,6 @@ st.markdown("""
         color: #5A4A42 !important;
     }
 
-    /* Memperketat vertical spacing pada struktur internal sidebar */
     [data-testid="stSidebarUserContent"] {
         padding-top: 1.5rem !important;
         gap: 0.5rem !important;
@@ -86,7 +83,6 @@ st.markdown("""
         border-color: rgba(234,156,175,0.25) !important;
     }
 
-    /* Penegasan visual komponen teks di dalam sidebar */
     [data-testid="stSidebar"] label {
         color: #5A4A42 !important;
         font-weight: 600 !important;
@@ -96,7 +92,6 @@ st.markdown("""
         color: #5A4A42 !important;
     }
 
-    /* Penargetan Tombol Kontrol Collapse Sidebar (Warna Hijau) */
     [data-testid="stSidebarCollapseButton"] button {
         color: #3D7D3D !important;
         background-color: transparent !important;
@@ -105,7 +100,6 @@ st.markdown("""
         color: #3D7D3D !important;
     }
 
-    /* 3. Main Dashboard Elements */
     .main-header {
         background: linear-gradient(
             135deg,
@@ -113,9 +107,11 @@ st.markdown("""
             rgba(180,212,122,0.18) 100%
         );
         border: 1px solid rgba(230,165,158,0.35);
-        border-radius: 16px !important; /* Mengeliminasi kelancipan sudut */
+        border-radius: 16px !important; 
         padding: 1.5rem;
         margin-bottom: 1rem;
+        backdrop-filter: blur(10px); /* Efek kaca */
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);    
     }
                 
     .main-header h1 {
@@ -127,7 +123,6 @@ st.markdown("""
         margin: 0;
     }
 
-    /* Konsistensi warna sub-header mepet judul, deskripsi data menggunakan abu-abu kecil */
     .main-header p.sub-title { 
         color: #EFE5D1; 
         margin: 0.2rem 0 0 0; 
@@ -141,26 +136,26 @@ st.markdown("""
         font-size: 0.8rem; 
     }
 
-    /* 4. Tabs Component Layout Alignment */
     .stTabs {
         margin-top: 1.5rem !important;
     }
 
     .stTabs [data-baseweb="tab"] {
-        background: #EFE5D1;
+        background: rgba(239, 229, 209, 0.8);
         color: #5A4A42;
-        border-radius: 12px 12px 0 0;
-        margin-right: 6px;
-        padding: 10px 18px;
+        border-radius: 20px; 
+        margin-right: 8px;
+        padding: 8px 20px;
         font-weight: 600;
+        border: 1px solid transparent;
+        transition: all 0.3s ease; 
     }
 
-    .stTabs [aria-selected="true"] {
-        background: #3D7D3D !important;
-        color: white !important;
+    .stTabs [data-baseweb="tab"]:hover {
+        background: #EFE5D1;
+        transform: translateY(-2px);
     }
 
-    /* 5. Metrics & Custom Cards */
     .metric-card {
         background: rgba(44,58,38,0.85);
         border: 1px solid rgba(180,212,122,0.35);
@@ -198,11 +193,13 @@ st.markdown("""
     .info-box {
         background: rgba(239,229,209,0.06);
         border: 1px solid rgba(180,212,122,0.25);
-        border-radius: 10px;
+        border-left: 4px solid #B4D47A;
+        border-radius: 8px;
         padding: 1rem 1.2rem;
         color: #F3EEF1;
         font-size: 0.88rem;
         line-height: 1.6;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .rec-card {
@@ -234,7 +231,6 @@ st.markdown("""
         text-align: center;
     }
 
-    /* 6. Form Inputs & Interactive Components */
     .stNumberInput input {
         background: rgba(243,238,241,0.08) !important;
         color: #F3EEF1 !important;
@@ -267,7 +263,6 @@ st.markdown("""
         opacity: 0.9; 
     }
 
-    /* Hide Default Elements */
     #MainMenu, footer { 
         visibility: hidden; 
     }
@@ -541,7 +536,7 @@ with tab_whatif:
                     feature_wi, pct_wi,
                 )
 
-            # ── SIDE-BY-SIDE COMPARISON ──────────────────────────────
+            # SIDE-BY-SIDE COMPARISON 
             st.markdown("---")
             direction_arrow = "Decreased by" if pct_wi < 0 else "Increased by"
             st.markdown(
@@ -576,7 +571,7 @@ with tab_whatif:
                 </div>
                 """, unsafe_allow_html=True)
 
-            # ── DELTA METRICS ─────────────────────────────
+            # DELTA METRICS 
             st.markdown("---")
             st.markdown("#### Observed Variances")
             d1, d2, d3 = st.columns(3)
@@ -595,7 +590,7 @@ with tab_whatif:
                 st.metric("Efficiency Score", f"{wi['after_score']}/100",
                           delta=f"{delta_sc:+d} points")
 
-            # ── INTERPRETATION ──────────────────────────────
+            # INTERPRETATION 
             direction = "decreased" if (delta_hl + delta_cl) < 0 else "increased"
             total_delta_pct = abs((delta_hl + delta_cl) / max((wi['before_hl'] + wi['before_cl']), 0.01) * 100)
             st.info(

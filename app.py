@@ -37,7 +37,7 @@ from helper import (
 )
 
 st.set_page_config(
-    page_title="EnergyPredict AI",
+    page_title="ArchiFlux AI",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -286,7 +286,7 @@ model_loaded = model is not None
 
 st.markdown("""
 <div class="main-header">
-  <h1>EnergyPredict AI</h1>
+  <h1>ArchiFlux AI</h1>
   <p>Predict & Calculate Building Heating Load · Cooling Load · Energy Efficiency</p>
     Based on UCI Energy Efficiency Dataset · Random Forest Regressor · MultiOutputRegressor
   </p>
